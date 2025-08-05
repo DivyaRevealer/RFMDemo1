@@ -14,27 +14,16 @@
 
 //import React, { useState } from 'react';
 import React, { useState, useEffect } from 'react';
-
 import { DatePicker, Select, Button } from 'antd';
 //import 'antd/dist/antd.css';
 import './Dashboard.css';
-import axios from 'axios';
 import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer
 } from 'recharts';
 
-//const COLORS = ['#4CAF50', '#8BC34A', '#FFC107', '#FF5722'];
-
- const COLORS = [
-
-  '#1E8449', // 5: Bought Most Recently (dark green)
-  '#52BE80', // 4
-  '#ABEBC6', // 3
-  '#F5B7B1', // 2
-  '#EC7063'  // 1: Long Time Ago (coral)
- ];
+const COLORS = ['#4CAF50', '#8BC34A', '#FFC107', '#FF5722'];
 
 // Sample Data
 // const metricData = {
@@ -93,57 +82,8 @@ import {
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-
-  const R_LABELS = {
-    5: "Bought Most Recently",
-    4: "4",
-    3: "3",
-    2: "2",
-    1: "Bought Long Time Ago",
-  };
- 
-  const F_LABELS = {
-    5: "More Frequent Visit",
-    4: "4",
-    3: "3",
-    2: "2",
-    1: "Most Rarest Visit",
-  };
- 
-  const M_LABELS = {
-    5: "Spend More on Purchase",
-    4: "4",
-    3: "3",
-    2: "2",
-    1: "Spend Less on Purchase",
-  };
-
-
-
 export default function Dashboard() {
   const [filters, setFilters] = useState({});
-  const [phones, setPhones] = useState([]);
-  const [names, setNames] = useState([]);
-  const [rValues, setRValues] = useState([]);
-  const [fValues, setFValues] = useState([]);
-  const [mValues, setMValues] = useState([]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/rfm');
-        const data = res.data || [];
-        setPhones([...new Set(data.map(item => item.Phone).filter(Boolean))]);
-        setNames([...new Set(data.map(item => item.Email || item.CustomerID).filter(Boolean))]);
-        setRValues([...new Set(data.map(item => item.R).filter(Boolean))]);
-        setFValues([...new Set(data.map(item => item.F).filter(Boolean))]);
-        setMValues([...new Set(data.map(item => item.M).filter(Boolean))]);
-      } catch (err) {
-        console.error('Failed to fetch filter options', err);
-      }
-    };
-    fetchOptions();
-  }, []);
   const [metricData, setMetricData] = useState({
     totalCustomers: 0,
     unitsPerTxn: 0,
@@ -178,55 +118,12 @@ export default function Dashboard() {
     setMetricData({ totalCustomers, unitsPerTxn, profitPerCustomer, customerSpending, daysToReturn, retentionRate });
 
     const rScoreCounts = countBy(rows, 'R_SCORE');
-    //setPieDataR(objectToArray(rScoreCounts));
-    // setPieDataR(
-    //   [5,4,3,2,1]
-    //     .filter(score => rScoreCounts[score])
-    //     .map(score => ({ name: R_LABELS[score], value: rScoreCounts[score] }))
-    // );
-    // Dynamically build R pie data in descending score order
-     const sortedRScores = Object.keys(rScoreCounts)
-       .map(Number)
-       .sort((a, b) => b - a);
-     setPieDataR(
-       sortedRScores.map(score => ({
-         name: R_LABELS[score],
-         value: rScoreCounts[score]
-       }))
-     );
+    setPieDataR(objectToArray(rScoreCounts));
     const fScoreCounts = countBy(rows, 'F_SCORE');
-    //setPieDataF(objectToArray(fScoreCounts));
-    // setPieDataF(
-    //   [5,4,3,2,1]
-    //     .filter(score => fScoreCounts[score])
-    //     .map(score => ({ name: F_LABELS[score], value: fScoreCounts[score] }))
-    // );
-        // Dynamically build F pie data in descending score order
-     const sortedFScores = Object.keys(fScoreCounts)
-       .map(Number)
-       .sort((a, b) => b - a);
-     setPieDataF(
-       sortedFScores.map(score => ({
-         name: F_LABELS[score],
-         value: fScoreCounts[score]
-       }))
-     );
+    setPieDataF(objectToArray(fScoreCounts));
     const mScoreCounts = countBy(rows, 'M_SCORE');
-    //setPieDataM(objectToArray(mScoreCounts));
-    // setPieDataM(
-    //   [5,4,3,2,1]
-    //     .filter(score => mScoreCounts[score])
-    //     .map(score => ({ name: M_LABELS[score], value: mScoreCounts[score] }))
-    // );
-    const sortedMScores = Object.keys(mScoreCounts)
-       .map(Number)
-       .sort((a, b) => b - a);
-     setPieDataM(
-       sortedMScores.map(score => ({
-         name: M_LABELS[score],
-         value: mScoreCounts[score]
-       }))
-     );
+    setPieDataM(objectToArray(mScoreCounts));
+
     const rBuckets = { '1-200': 0, '200-400': 0, '400-600': 0, '600-800': 0, '800-1000': 0, '>1000': 0 };
     rows.forEach((r) => {
       const v = r.R_VALUE || 0;
@@ -280,62 +177,47 @@ export default function Dashboard() {
         <RangePicker />
         <Select placeholder="Customer Mobile No" className="filter-select">
           <Option value="all">All</Option>
-           {phones.map(phone => (
-            <Option key={phone} value={phone}>{phone}</Option>
-          ))}
         </Select>
         <Select placeholder="Customer Name" className="filter-select">
           <Option value="all">All</Option>
-           {names.map(name => (
-            <Option key={name} value={name}>{name}</Option>
-          ))}
         </Select>
         <Select placeholder="R Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-          {rValues.sort().map(r => (
-            <Option key={r} value={r}>{r}</Option>
-          ))}
         </Select>
         <Select placeholder="F Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-           {fValues.sort().map(f => (
-            <Option key={f} value={f}>{f}</Option>
-          ))}
         </Select>
         <Select placeholder="M Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-          {mValues.sort().map(m => (
-            <Option key={m} value={m}>{m}</Option>
-          ))}
         </Select>
         <Button type="primary">Apply Filter</Button>
       </div>
 
       {/* Metric Cards */}
-      <div className="metrics1">
-        <div className="metric-card1">
+      <div className="metrics">
+        <div className="metric-card">
           <h3>Total Customer</h3>
           <p>{metricData.totalCustomers.toLocaleString()}</p>
         </div>
-        <div className="metric-card1">
+        <div className="metric-card">
           <h3>Unit Per Transaction</h3>
           <p>{metricData.unitsPerTxn}</p>
         </div>
-        <div className="metric-card1">
+        <div className="metric-card">
           <h3>Profit Per Customer</h3>
           {/* <p>{metricData.profitPerCustomer.toLocaleString()}</p> */}
            <p>{metricData.profitPerCustomer}</p>
         </div>
-        <div className="metric-card1">
+        <div className="metric-card">
           <h3>Customer Spending</h3>
           {/* <p>{metricData.customerSpending.toLocaleString()}</p> */}
           <p>{metricData.customerSpending}</p>
         </div>
-        <div className="metric-card1">
+        <div className="metric-card">
           <h3>Days to Return</h3>
           <p>{metricData.daysToReturn}</p>
         </div>
-        <div className="metric-card1">
+        <div className="metric-card">
           <h3>Retention Rate</h3>
           <p>{metricData.retentionRate}%</p>
         </div>
@@ -345,113 +227,55 @@ export default function Dashboard() {
       <div className="charts">
         <div className="chart-container">
           <h4>Total Customer by R Score</h4>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie data={pieDataR} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false} >
+              <Pie data={pieDataR} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} label>
                 {pieDataR.map((entry, index) => (
                   // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   <Cell key={`cell-r-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
-              <Legend
-               layout="vertical"
-               align="right"
-               verticalAlign="middle"
-               iconSize={8}
-               wrapperStyle={{ fontSize: '12px',fontWeight: 'bold'  }} 
-               itemStyle={{ fontSize: '12px', lineHeight: '16px' ,fontWeight: 'bold' }} // each item
-               payload={pieDataR.map((entry, idx) => ({
-                 value: entry.name,
-                 type: 'square',
-                 id:    entry.name,
-                 color: COLORS[idx % COLORS.length],
-               }))}
-             />
+              <Legend />
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">
           <h4>Total Customer by F Score</h4>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie data={pieDataF} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false} >
+              <Pie data={pieDataF} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} label>
                 {pieDataF.map((entry, index) => (
                   // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                    <Cell key={`cell-f-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
-               <Legend
-               layout="vertical"
-               align="right"
-               verticalAlign="middle"
-               iconSize={8}
-               wrapperStyle={{ fontSize: '12px',fontWeight: 'bold'  }} 
-               itemStyle={{ fontSize: '12px', lineHeight: '16px',fontWeight: 'bold' }} // each item
-               payload={pieDataF.map((entry, idx) => ({
-                 value: entry.name,
-                 type: 'square',
-                 id:    entry.name,
-                 color: COLORS[idx % COLORS.length],
-               }))}
-             />
+              <Legend />
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">
           <h4>Total Customer by M Score</h4>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie data={pieDataM} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false}>
+              <Pie data={pieDataM} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} label>
                 {pieDataM.map((entry, index) => (
                   // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                    <Cell key={`cell-m-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
-               <Legend
-               layout="vertical"
-               align="right"
-               verticalAlign="middle"
-               iconSize={8}
-               wrapperStyle={{ fontSize: '12px',fontWeight: 'bold'  }} 
-               itemStyle={{ fontSize: '12px', lineHeight: '16px' ,fontWeight: 'bold'  }} // each item
-               payload={pieDataM.map((entry, idx) => ({
-                 value: entry.name,
-                 type: 'square',
-                 id:    entry.name,
-                 color: COLORS[idx % COLORS.length],
-               }))}
-             />
+              <Legend />
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">
           <h4>Total Customer by R Value Bucket (Days)</h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={barDataR} layout="vertical" margin={{ top: 20, right: 30, left: 30, bottom: 30 }} >
-              <XAxis type="number" dataKey="value"
-                  domain={[0, 'dataMax']}
-                  tick={{ fontSize: 12 }}
-                  label={{ 
-                    value: 'Total Customer', 
-                    position: 'bottom', 
-                    offset: 0 
-                  }} />
-              <YAxis dataKey="bucket" type="category"
-              width={120}
-              tick={{ fontSize: 12 }}
-              label={{
-                value: 'R value Bucket (Days)',
-                angle: -90,
-                position: 'right',   // move it outside the axis
-                dx: -90,            // shift it further left into the margin
-                dy: 90               // no vertical shift
-              }}/>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={barDataR} layout="vertical">
+              <XAxis type="number" />
+              <YAxis dataKey="bucket" type="category" />
               <Tooltip />
               <Bar dataKey="value">
                 {barDataR.map((entry, index) => (
@@ -463,29 +287,10 @@ export default function Dashboard() {
         </div>
         <div className="chart-container">
           <h4>Total Customer by No. of Visits</h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={barDataVisits} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 30 }} >
-              {/* <XAxis type="number" />
-              <YAxis dataKey="visits" type="category" /> */}
-                  <XAxis
-                    type="number"
-                    dataKey="value"
-                    domain={[0, 'dataMax']}
-                    tick={{ fontSize: 12 }}
-                    label={{ value: 'Total Customer', position: 'bottom', offset: 0 }}
-                  />
-                  <YAxis
-                    dataKey="visits"
-                    type="category"
-                    width={100}
-                    tick={{ fontSize: 12 }}
-                    label={{ value: 'No. of Visits', angle: -90, 
-                      position: 'right',   // move it outside the axis
-                      dx: -90,            // shift it further left into the margin
-                      dy: 50               // no vertical shift
-                    
-                    }}
-                  />
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={barDataVisits} layout="vertical">
+              <XAxis type="number" />
+              <YAxis dataKey="visits" type="category" />
               <Tooltip />
               <Bar dataKey="value">
                 {barDataVisits.map((entry, index) => (
@@ -497,24 +302,10 @@ export default function Dashboard() {
         </div>
         <div className="chart-container">
           <h4>Total Customer by Value</h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={barDataValue} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 30 }} >
-              {/* <XAxis type="number" />
-              <YAxis dataKey="range" type="category" /> */}
-              <XAxis
-                type="number"
-                dataKey="value"
-                domain={[0, 'dataMax']}
-                tick={{ fontSize: 12 }}
-                label={{ value: 'Total Customer', position: 'bottom', offset: 0 }}
-              />
-              <YAxis
-                dataKey="range"
-                type="category"
-                width={100}
-                tick={{ fontSize: 12 }}
-                label={{ value: 'Value', angle: -90, position: 'insideLeft', offset: 10 }}
-              />
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={barDataValue} layout="vertical">
+              <XAxis type="number" />
+              <YAxis dataKey="range" type="category" />
               <Tooltip />
               <Bar dataKey="value">
                 {barDataValue.map((entry, index) => (

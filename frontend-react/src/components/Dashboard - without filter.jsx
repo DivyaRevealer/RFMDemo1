@@ -14,11 +14,9 @@
 
 //import React, { useState } from 'react';
 import React, { useState, useEffect } from 'react';
-
 import { DatePicker, Select, Button } from 'antd';
 //import 'antd/dist/antd.css';
 import './Dashboard.css';
-import axios from 'axios';
 import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
@@ -122,28 +120,6 @@ const { Option } = Select;
 
 export default function Dashboard() {
   const [filters, setFilters] = useState({});
-  const [phones, setPhones] = useState([]);
-  const [names, setNames] = useState([]);
-  const [rValues, setRValues] = useState([]);
-  const [fValues, setFValues] = useState([]);
-  const [mValues, setMValues] = useState([]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/rfm');
-        const data = res.data || [];
-        setPhones([...new Set(data.map(item => item.Phone).filter(Boolean))]);
-        setNames([...new Set(data.map(item => item.Email || item.CustomerID).filter(Boolean))]);
-        setRValues([...new Set(data.map(item => item.R).filter(Boolean))]);
-        setFValues([...new Set(data.map(item => item.F).filter(Boolean))]);
-        setMValues([...new Set(data.map(item => item.M).filter(Boolean))]);
-      } catch (err) {
-        console.error('Failed to fetch filter options', err);
-      }
-    };
-    fetchOptions();
-  }, []);
   const [metricData, setMetricData] = useState({
     totalCustomers: 0,
     unitsPerTxn: 0,
@@ -280,33 +256,18 @@ export default function Dashboard() {
         <RangePicker />
         <Select placeholder="Customer Mobile No" className="filter-select">
           <Option value="all">All</Option>
-           {phones.map(phone => (
-            <Option key={phone} value={phone}>{phone}</Option>
-          ))}
         </Select>
         <Select placeholder="Customer Name" className="filter-select">
           <Option value="all">All</Option>
-           {names.map(name => (
-            <Option key={name} value={name}>{name}</Option>
-          ))}
         </Select>
         <Select placeholder="R Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-          {rValues.sort().map(r => (
-            <Option key={r} value={r}>{r}</Option>
-          ))}
         </Select>
         <Select placeholder="F Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-           {fValues.sort().map(f => (
-            <Option key={f} value={f}>{f}</Option>
-          ))}
         </Select>
         <Select placeholder="M Value Bucket" className="filter-select">
           <Option value="all">All</Option>
-          {mValues.sort().map(m => (
-            <Option key={m} value={m}>{m}</Option>
-          ))}
         </Select>
         <Button type="primary">Apply Filter</Button>
       </div>

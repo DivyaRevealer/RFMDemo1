@@ -1,4 +1,4 @@
-
+/* 
 .rfm-dashboard {
   padding: 20px;
   background-color: #f0f2f5;
@@ -49,6 +49,114 @@
 .charts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.chart-container {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h4 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  color: #333;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .filters, .metrics, .charts {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+} */
+
+
+
+.rfm-dashboard {
+  padding: 20px;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.filter-select {
+  min-width: 160px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.metric-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.metric-card p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111;
+}
+
+
+.metrics1 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card1 {
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 8px;
+  background-color: #ffffff; /* ensure the card body is white */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.metric-card1 h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #555;
+  background-color: #4CAF50;  /* header background */
+  color: #ffffff;              /* header text color */
+}
+
+.metric-card1 p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(300px, 1fr));
   gap: 24px;
 }
 
