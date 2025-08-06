@@ -1,0 +1,70 @@
+/* Layout.css */
+.layout {
+  display: flex;
+  height: 100vh;
+  font-family: sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 70px;
+  background: #1f2a40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  transition: width 0.3s;
+}
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sidebar-bottom {
+  margin-top: auto;   /* pushes logout to bottom */
+  display: flex;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+.layout.collapsed .sidebar {
+  width: 30px;
+}
+
+/* Buttons in the sidebar */
+.toggle-btn,
+.nav-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.6rem;
+  margin: 20px 0;
+  cursor: pointer;
+}
+.toggle-btn:hover,
+.nav-btn:hover {
+  color: #52be80;
+}
+
+/* Main area */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #123568;
+  color: #fff;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 1.2rem;
+}
+.content {
+  flex: 1;
+  background: #f5f7fa;
+  padding: 20px;
+  overflow-y: auto;
+}
