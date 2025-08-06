@@ -181,3 +181,14 @@
     gap: 12px;
   }
 }
+
+.charts1 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; /* adjust spacing as needed */
+}
+
+/* Have the first container span 2 columns */
+.chart-container.treemap {
+  grid-column: span 2;
+}

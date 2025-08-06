@@ -21,7 +21,7 @@ import './Dashboard.css';
 import axios from 'axios';
 import {
   PieChart, Pie, Cell,
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,Treemap,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,Treemap,LineChart, CartesianGrid,Line,
   ResponsiveContainer
 } from 'recharts';
 
@@ -183,7 +183,16 @@ export default function Dashboard() {
   const [barDataR, setBarDataR] = useState([]);
   const [barDataVisits, setBarDataVisits] = useState([]);
   const [barDataValue, setBarDataValue] = useState([]);
-
+  const [segmentData, setSegmentData]       = useState([]);
+  const [daysBucketData, setDaysBucketData] = useState([]);
+  const customerPercentData = [
+    { year: '2019', newCustomer: 93.33, oldCustomer: 6.67 },
+    { year: '2020', newCustomer: 81.01, oldCustomer: 18.99 },
+    { year: '2021', newCustomer: 76.61, oldCustomer: 23.39 },
+    { year: '2022', newCustomer: 65.43, oldCustomer: 34.57 },
+    { year: '2023', newCustomer: 49.02, oldCustomer: 50.98 },
+    { year: '2024', newCustomer: 35.19, oldCustomer: 64.81 },
+  ];
   // useEffect(() => {
   //   fetch('http://localhost:8000/dashboard/')
   //     .then((res) => res.json())
@@ -263,7 +272,29 @@ export default function Dashboard() {
       else rBuckets['>1000']++;
     });
     setBarDataR(objectEntriesToArray(rBuckets, 'bucket'));
-    
+    const segmentCounts = countBy(rows, 'SEGMENT_MAP');
+    const segArr = Object.entries(segmentCounts)
+      .map(([name, v]) => ({ name, value: v }));
+     setSegmentData(segArr);
+
+     // ── Days to Return Bucket ────────────────────────────────
+    const d = {
+       '1 Month': 0, '1-2 Month': 0, '2-3 Month': 0,
+       '3-6 Month': 0, '6 Month-1 Yr': 0, '1-2 Yr': 0, '>2 Yr': 0
+     };
+    rows.forEach(r => {
+       const days = r.DAYS || 0;
+       if      (days <= 30)   d['1 Month']++;
+       else if (days <= 60)   d['1-2 Month']++;
+       else if (days <= 90)   d['2-3 Month']++;
+       else if (days <= 180)  d['3-6 Month']++;
+       else if (days <= 365)  d['6 Month-1 Yr']++;
+       else if (days <= 730)  d['1-2 Yr']++;
+       else                   d['>2 Yr']++;
+     });
+    setDaysBucketData(
+       Object.entries(d).map(([bucket, v]) => ({ bucket, value: v }))
+     );
 
     const visitsCounts = {};
     rows.forEach((r) => {
@@ -648,6 +679,86 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+        {/* <div className="charts grid grid-cols-3 gap-4 items-start"> */}
+            {/* ── Total Customer by Segment ───────────────────────── */}
+            <div className="chart-container">
+              <h4>Total Customer by Segment</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <Treemap
+                  data={segmentData}
+                  dataKey="value"
+                  nameKey="name"
+                  stroke="#fff"
+                  aspectRatio={4 / 3}
+                />
+              </ResponsiveContainer>
+            </div>
+
+            {/* ── Days to Return Bucket ────────────────────────────── */}
+            <div className="chart-container">
+              <h4>Days to Return Bucket</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={daysBucketData}>
+                  <XAxis dataKey="bucket" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#1E8449" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+        {/* </div> */}
+        {/* ── Current Vs New Customer % (FY) ───────────────────────── */}
+          <div className="chart-container col-span-3">
+            <h4>Current Vs New Customer % (FY)</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={customerPercentData}
+                margin={{ top: 20, right: 50, bottom: 5, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                {/* Left axis for New Customer % */}
+                <YAxis
+                  yAxisId="left"
+                  domain={[0, 100]}
+                  label={{
+                    value: 'New Customer %',
+                    angle: -90,
+                    position: 'insideLeft'
+                  }}
+                />
+                {/* Right axis for Old Customer % */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={[0, 100]}
+                  label={{
+                    value: 'Old Customer %',
+                    angle: 90,
+                    position: 'insideRight'
+                  }}
+                />
+                <Tooltip />
+                <Legend verticalAlign="top" />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="newCustomer"
+                  name="New Customer %"
+                  stroke="#28a745"
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="oldCustomer"
+                  name="Old Customer %"
+                  stroke="#333"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        
       </div>
     </div>
   );
