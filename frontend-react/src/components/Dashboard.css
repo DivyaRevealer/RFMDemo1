@@ -164,7 +164,10 @@
   background: #ffffff;
   padding: 16px;
   border-radius: 8px;
+  font-family: 'Inter', Arial, sans-serif;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 0.875rem; /* adjust as needed */
+  font-weight: bold
 }
 
 .chart-container h4 {

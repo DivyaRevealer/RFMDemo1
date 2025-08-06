@@ -185,14 +185,7 @@ export default function Dashboard() {
   const [barDataValue, setBarDataValue] = useState([]);
   const [segmentData, setSegmentData]       = useState([]);
   const [daysBucketData, setDaysBucketData] = useState([]);
-  const customerPercentData = [
-    { year: '2019', newCustomer: 93.33, oldCustomer: 6.67 },
-    { year: '2020', newCustomer: 81.01, oldCustomer: 18.99 },
-    { year: '2021', newCustomer: 76.61, oldCustomer: 23.39 },
-    { year: '2022', newCustomer: 65.43, oldCustomer: 34.57 },
-    { year: '2023', newCustomer: 49.02, oldCustomer: 50.98 },
-    { year: '2024', newCustomer: 35.19, oldCustomer: 64.81 },
-  ];
+  const [customerPercentData, setCustomerPercentData] = useState([]);
   // useEffect(() => {
   //   fetch('http://localhost:8000/dashboard/')
   //     .then((res) => res.json())
@@ -272,30 +265,7 @@ export default function Dashboard() {
       else rBuckets['>1000']++;
     });
     setBarDataR(objectEntriesToArray(rBuckets, 'bucket'));
-    const segmentCounts = countBy(rows, 'SEGMENT_MAP');
-    const segArr = Object.entries(segmentCounts)
-      .map(([name, v]) => ({ name, value: v }));
-     setSegmentData(segArr);
-
-     // ── Days to Return Bucket ────────────────────────────────
-    const d = {
-       '1 Month': 0, '1-2 Month': 0, '2-3 Month': 0,
-       '3-6 Month': 0, '6 Month-1 Yr': 0, '1-2 Yr': 0, '>2 Yr': 0
-     };
-    rows.forEach(r => {
-       const days = r.DAYS || 0;
-       if      (days <= 30)   d['1 Month']++;
-       else if (days <= 60)   d['1-2 Month']++;
-       else if (days <= 90)   d['2-3 Month']++;
-       else if (days <= 180)  d['3-6 Month']++;
-       else if (days <= 365)  d['6 Month-1 Yr']++;
-       else if (days <= 730)  d['1-2 Yr']++;
-       else                   d['>2 Yr']++;
-     });
-    setDaysBucketData(
-       Object.entries(d).map(([bucket, v]) => ({ bucket, value: v }))
-     );
-
+    
     const visitsCounts = {};
     rows.forEach((r) => {
       const v = r.F_VALUE || 0;
@@ -352,6 +322,10 @@ export default function Dashboard() {
       const res = await axios.get('http://localhost:8000/dashboard/', { params });
       console.log("res------ ",res)
       computeMetrics(res.data);
+      const chartsRes = await axios.get('http://localhost:8000/dashboard/last_three_charts', { params });
+      setSegmentData(chartsRes.data.segmentData || []);
+      setDaysBucketData(chartsRes.data.daysBucketData || []);
+      setCustomerPercentData(chartsRes.data.customerPercentData || []);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
     }
