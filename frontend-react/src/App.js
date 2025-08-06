@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
+import Layout from "./components/Layout";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("token");
@@ -21,7 +22,10 @@ function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <Dashboard />
+              {/* <Layout> */}
+                <Dashboard />
+              {/* </Layout> */}
+              
             </PrivateRoute>
           }
         />
