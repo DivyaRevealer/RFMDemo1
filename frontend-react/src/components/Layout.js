@@ -44,7 +44,7 @@ export default function Layout({ children }) {
 
       <div className="main">
         <header className="header">
-          Target Achievement Analysis
+          RFM Analysis
         </header>
         <div className="content">
           {children}
