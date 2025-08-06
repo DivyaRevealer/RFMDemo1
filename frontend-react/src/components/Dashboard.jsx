@@ -21,9 +21,11 @@ import './Dashboard.css';
 import axios from 'axios';
 import {
   PieChart, Pie, Cell,
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,Treemap,LineChart, CartesianGrid,Line,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,Treemap,LineChart, CartesianGrid,Line,LabelList, 
   ResponsiveContainer
 } from 'recharts';
+import { HomeOutlined, BarChartOutlined, CalendarOutlined } from '@ant-design/icons';
+
 
 //const COLORS = ['#4CAF50', '#8BC34A', '#FFC107', '#FF5722'];
 
@@ -319,10 +321,14 @@ export default function Dashboard() {
      }
 
     try {
-      const res = await axios.get('http://localhost:8000/dashboard/', { params });
+      // const res = await axios.get('http://localhost:8000/dashboard/', { params });
+       const [res, chartsRes] = await Promise.all([
+        axios.get('http://localhost:8000/dashboard/', { params }),
+        axios.get('http://localhost:8000/dashboard/last_three_charts', { params }),
+      ]);
       console.log("res------ ",res)
       computeMetrics(res.data);
-      const chartsRes = await axios.get('http://localhost:8000/dashboard/last_three_charts', { params });
+      // const chartsRes = await axios.get('http://localhost:8000/dashboard/last_three_charts', { params });
       setSegmentData(chartsRes.data.segmentData || []);
       setDaysBucketData(chartsRes.data.daysBucketData || []);
       setCustomerPercentData(chartsRes.data.customerPercentData || []);
@@ -662,9 +668,18 @@ export default function Dashboard() {
                   data={segmentData}
                   dataKey="value"
                   nameKey="name"
-                  stroke="#fff"
+                  
                   aspectRatio={4 / 3}
-                />
+                  label={{
+                    fill: '#000',
+                    stroke: 'none',
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    position: 'center'
+                  }}
+                  >
+                 
+               </Treemap>
               </ResponsiveContainer>
             </div>
 
