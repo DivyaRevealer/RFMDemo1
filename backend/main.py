@@ -1,10 +1,13 @@
-
+import sys
 from fastapi import FastAPI
 from database import engine, Base
 #from controllers import auth
 from controllers import auth, dashboard
 from controllers import auth, dashboard, filters
 from fastapi.middleware.cors import CORSMiddleware
+
+print("PYTHON EXECUTABLE:", sys.executable)
+print("sys.path:", sys.path)
 
 app = FastAPI()
 

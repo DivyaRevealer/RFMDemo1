@@ -21,7 +21,7 @@ import './Dashboard.css';
 import axios from 'axios';
 import {
   PieChart, Pie, Cell,
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,Treemap,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer
 } from 'recharts';
 
@@ -263,7 +263,6 @@ export default function Dashboard() {
       else rBuckets['>1000']++;
     });
     setBarDataR(objectEntriesToArray(rBuckets, 'bucket'));
-    
 
     const visitsCounts = {};
     rows.forEach((r) => {
@@ -298,8 +297,6 @@ export default function Dashboard() {
 
   const objectEntriesToArray = (obj, keyName) =>
     Object.entries(obj).map(([key, value]) => ({ [keyName]: String(key), value }));
-
-  
 
     const applyFilters = async () => {
     const params = {};

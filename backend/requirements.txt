@@ -4,3 +4,8 @@ pandas
 requests
 python-multipart
 openpyxl
+sqlalchemy
+pymysql
+passlib
+jose
+bcrypt
