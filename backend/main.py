@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from database import engine, Base
 #from controllers import auth
 from controllers import auth, dashboard
+from controllers import auth, dashboard, filters
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -21,6 +22,7 @@ Base.metadata.create_all(bind=engine)
 # Include routes
 app.include_router(auth.router)
 app.include_router(dashboard.router)
+app.include_router(filters.router)
 
 @app.get("/")
 def root():

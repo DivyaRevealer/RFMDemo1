@@ -131,16 +131,33 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/rfm');
+        const res = await axios.get('http://localhost:8000/filters');
         const data = res.data || [];
-        setPhones([...new Set(data.map(item => item.Phone).filter(Boolean))]);
-        setNames([...new Set(data.map(item => item.Email || item.CustomerID).filter(Boolean))]);
-        setRValues([...new Set(data.map(item => item.R).filter(Boolean))]);
-        setFValues([...new Set(data.map(item => item.F).filter(Boolean))]);
-        setMValues([...new Set(data.map(item => item.M).filter(Boolean))]);
-      } catch (err) {
-        console.error('Failed to fetch filter options', err);
-      }
+            const {
+            phones: phoneList = [],
+            names: nameList = [],
+            r_values: rList = [],
+            f_values: fList = [],
+            m_values: mList = []
+          } = res.data || {};
+          
+          // now just set state directly
+          setPhones(phoneList);
+          setNames(nameList);
+          setRValues(rList);
+          setFValues(fList);
+          setMValues(mList);
+          
+          console.log('Fetched filters:', {
+            phoneList,
+            nameList,
+            rList,
+            fList,
+            mList
+          });
+        } catch (err) {
+          console.error('Failed to fetch filter options', err);
+        }
     };
     fetchOptions();
   }, []);
