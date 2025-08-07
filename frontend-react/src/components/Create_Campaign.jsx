@@ -2,7 +2,7 @@ import { message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox } from 'antd';
-
+import api from '../api';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
@@ -98,9 +98,11 @@ const onFinish = async values => {
   try {
     
     //await axios.post('http://localhost:8000/campaign/', payload);
-    await axios.post('http://localhost:8000/campaign/createCampaign', payload);
+    //await axios.post('http://localhost:8000/campaign/createCampaign/', payload);
+   // axios.get('http://localhost:8000/campaign/options')
+    await api.post('/campaign/createCampaign', payload);
     message.success('Campaign saved successfully');
-    form.resetFields();
+   // form.resetFields();
   } catch (err) {
     console.error(err);
     console.error('🚨 Save failed:', err.response ? err.response.data : err);

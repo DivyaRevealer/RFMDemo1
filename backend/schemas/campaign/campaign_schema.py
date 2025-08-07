@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional, Dict
 from pydantic import BaseModel
 
@@ -6,38 +6,38 @@ class CampaignBase(BaseModel):
     start_date:       date
     end_date:         date
     recency_op:       str
-    recency_min:      Optional[int]
-    recency_max:      Optional[int]
+    recency_min:      Optional[int]= None
+    recency_max:      Optional[int]= None
     frequency_op:     str
-    frequency_min:    Optional[int]
-    frequency_max:    Optional[int]
+    frequency_min:    Optional[int]= None
+    frequency_max:    Optional[int]= None
     monetary_op:      str
-    monetary_min:     Optional[float]
-    monetary_max:     Optional[float]
-    r_score:          Optional[List[int]]
-    f_score:          Optional[List[int]]
-    m_score:          Optional[List[int]]
+    monetary_min:     Optional[float]= None
+    monetary_max:     Optional[float]= None
+    r_score:          Optional[List[int]]= None
+    f_score:          Optional[List[int]]= None
+    m_score:          Optional[List[int]]= None
     rfm_segments:     List[str]
-    branch:           Optional[List[str]]
-    city:             Optional[List[str]]
-    state:            Optional[List[str]]
-    birthday_date:    Optional[date]
-    anniversary_date: Optional[date]
+    branch:           Optional[List[str]]= None
+    city:             Optional[List[str]]= None
+    state:            Optional[List[str]]= None
+    birthday_date:    Optional[date]= None
+    anniversary_date: Optional[date]= None
     purchase_type:    List[str]
-    purchase_brand:  Optional[List[str]]
-    section:          Optional[List[str]]
-    product:          Optional[List[str]]
-    model:            Optional[List[str]]
-    item:             Optional[List[str]]
-    value_threshold:  Optional[float]
+    purchase_brand:  Optional[List[str]]= None
+    section:          Optional[List[str]]= None
+    product:          Optional[List[str]]= None
+    model:            Optional[List[str]]= None
+    item:             Optional[List[str]]= None
+    value_threshold:  Optional[float]= None
 
 class CampaignCreate(CampaignBase):
     pass
 
 class Campaign(CampaignBase):
     id:               int
-    created_at:       date
-    updated_at:       date
+    created_at:       datetime
+    updated_at:       datetime
 
     class Config:
         from_attributes = True

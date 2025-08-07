@@ -54,6 +54,7 @@ def get_campaign_options(db: Session) -> CampaignOptions:
     )
 
 def create_campaign(db: Session, data: CampaignCreate) -> Campaign:
+    print("inside create campaign-----------------")
     db_obj = Campaign(**data.dict())
     db.add(db_obj)
     db.commit()
