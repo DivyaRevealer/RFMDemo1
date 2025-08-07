@@ -52,6 +52,7 @@ class CampaignOptions(BaseModel):
     branch_city_map:  Dict[str, List[str]]
     branch_state_map: Dict[str, List[str]]
 
+    brands:         List[str]
     sections:         List[str]
     products:         List[str]
     models:           List[str]

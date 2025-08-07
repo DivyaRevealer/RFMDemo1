@@ -24,21 +24,53 @@ export default function Create_Campaign() {
     rfm_segments: [],
 
     branches: [],
-    branchCityMap: {},
-    branchStateMap: {},
-
+    branch_city_map: {},
+    branch_state_map: {},
+    brands: [],
     sections: [],
     products: [],
     models: [],
     items: []
   });
 
+    const { brands } = options;
+    const { sections } = options;
+    const { products } = options;
+    const { models } = options;
+    const { items } = options;
+
+    const { r_scores } = options;
+    const { f_scores } = options;
+    const { m_scores } = options;
+    const { rfm_segments } = options;
+
+    const { branches } = options;
+    const { branch_city_map } = options;
+    const { branch_state_map } = options;
+    
   
   useEffect(() => {
     axios.get('http://localhost:8000/campaign/options')
-      .then(res => setOptions(res.data))
+    // api.get('/campaign/options')
+     //console.log("res.data---- ",res.data)
+     
+      .then(res => {
+        console.log('🗺️ branchCityMap:', res.data.branch_city_map);
+        setOptions(res.data)})
       .catch(() => message.error('Failed to load filters'));
   }, []);
+
+//   useEffect(() => {
+//   const fetchOptions = async () => {
+//     try {
+//       const res = await api.get('/campaign/options');
+//       setOptions(res.data);
+//     } catch {
+//       message.error('Failed to load filters');
+//     }
+//   };
+//   fetchOptions();
+// }, []);
 
 
   // const onFinish = (values) => {
@@ -258,11 +290,18 @@ const onFinish = async values => {
           <Row gutter={16} style={{ marginTop: 16 }}>
             <Col span={8}>
               <Form.Item name="rScore" label="R-Score">
-                <Select mode="multiple" placeholder="Select score">
+                {/* <Select mode="multiple" placeholder="Select score">
                   {[5,4,3,2,1].map(i => (
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
-                </Select>
+                </Select> */}
+                <Select mode="multiple" placeholder="Select R score">
+                    {r_scores.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
 
                  {/* <Select mode="multiple" placeholder="Select R-Scores">
                   {r_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
@@ -271,11 +310,18 @@ const onFinish = async values => {
             </Col>
             <Col span={8}>
               <Form.Item name="fScore" label="F-Score">
-                <Select mode="multiple" placeholder="Select score">
+                {/* <Select mode="multiple" placeholder="Select score">
                   {[5,4,3,2,1].map(i => (
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
-                </Select>
+                </Select> */}
+                 <Select mode="multiple" placeholder="Select f score">
+                    {f_scores.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
                   {/* <Select mode="multiple" placeholder="Select F-Scores">
                     {f_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
                   </Select> */}
@@ -283,11 +329,18 @@ const onFinish = async values => {
             </Col>
             <Col span={8}>
               <Form.Item name="mScore" label="M-Score">
-                <Select mode="multiple" placeholder="Select score">
+                {/* <Select mode="multiple" placeholder="Select score">
                   {[5,4,3,2,1].map(i => (
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
-                </Select>
+                </Select> */}
+                 <Select mode="multiple" placeholder="Select M score">
+                    {m_scores.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
                  {/* <Select mode="multiple" placeholder="Select M-Scores">
                     {m_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
                   </Select> */}
@@ -297,13 +350,20 @@ const onFinish = async values => {
 
           <Title level={5} style={{ marginTop: 24 }}>RFM Segment</Title>
           <Form.Item name="rfmSegment" rules={[{ required: true, message: 'Select at least one segment' }]}>  
-            <Select mode="multiple" placeholder="Select segments">
+            {/* <Select mode="multiple" placeholder="Select segments">
               <Select.Option value="Champions">Champions</Select.Option>
               <Select.Option value="Potential Loyalists">Potential Loyalists</Select.Option>
               <Select.Option value="New Customers">New Customers</Select.Option>
               <Select.Option value="At Risk">At Risk</Select.Option>
               <Select.Option value="Lost">Lost</Select.Option>
-            </Select>
+            </Select> */}
+            <Select mode="multiple" placeholder="Select Segment">
+                    {rfm_segments.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
              {/* <Select mode="multiple" placeholder="Select segments">
               {rfm_segments.map(seg => <Option key={seg} value={seg}>{seg}</Option>)}
             </Select> */}
@@ -314,42 +374,80 @@ const onFinish = async values => {
         <Card title="Geography" style={{ marginTop: 5 }}>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="branch" label="Branch">
-                <Select mode="multiple" placeholder="Select branch">
+              <Form.Item name="branch" label="Branch" rules={[{ required: true }]}>
+                {/* <Select mode="multiple" placeholder="Select branch">
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Branch A">Branch A</Select.Option>
                   <Select.Option value="Branch B">Branch B</Select.Option>
-                </Select>
+                </Select> */}
+                 <Select mode="multiple" placeholder="Select Branch">
+                    {branches.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
                 {/* <Select mode="multiple" placeholder="Select branches">
                 {branches.map(b => <Option key={b} value={b}>{b}</Option>)}
               </Select> */}
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="city" label="City">
-                <Select mode="multiple" placeholder="Select city">
-                  <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="City1">City1</Select.Option>
-                  <Select.Option value="City2">City2</Select.Option>
-                </Select>
-                 {/* <Select mode="multiple" placeholder="Select cities">
-                  {cityOptions.map(c => <Option key={c} value={c}>{c}</Option>)}
-                </Select> */}
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="state" label="State">
-                <Select mode="multiple" placeholder="Select state">
-                  <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="State1">State1</Select.Option>
-                  <Select.Option value="State2">State2</Select.Option>
-                </Select>
+              {/* City picker: depends on branch */}
+   {/* City picker: depends on branch */}
+<Col span={8}>
+  <Form.Item noStyle dependencies={['branch']}>
+    {({ getFieldValue }) => {
+      const selectedBranches = getFieldValue('branch') || [];
+      console.log("selectedBranches------------ ", selectedBranches);
+      console.log("branch_city_map---- ", branch_city_map);
 
-                {/* <Select mode="multiple" placeholder="Select states">
-                  {stateOptions.map(s => <Option key={s} value={s}>{s}</Option>)}
-                </Select> */}
-              </Form.Item>
-            </Col>
+      const cityOptions = Array.from(
+        new Set(
+          selectedBranches.flatMap(branch =>
+            // use the same snake_case key you set in state
+            (branch_city_map?.[branch] ?? [])
+          )
+        )
+      );
+
+      return (
+        <Form.Item name="city" label="City">
+          <Select mode="multiple" placeholder="Select City">
+            {cityOptions.map(city => (
+              <Option key={city} value={city}>
+                {city}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+      );
+    }}
+  </Form.Item>
+</Col>
+
+    {/* State picker: depends on branch */}
+    <Col span={8}>
+      <Form.Item noStyle dependencies={['branch']}>
+        {({ getFieldValue }) => {
+          const selected = getFieldValue('branch') || [];
+          // flatten & dedupe states for selected branches
+          const stateOptions = Array.from(
+            new Set(
+              selected.flatMap(b => branch_state_map[b] || [])
+            )
+          );
+          return (
+            <Form.Item name="state" label="State" rules={[{ required: true }]}>
+              <Select mode="multiple" placeholder="Select State">
+                {stateOptions.map(s => (
+                  <Option key={s} value={s}>{s}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+          );
+        }}
+         </Form.Item>
+    </Col>
           </Row>
         </Card>
 
@@ -393,24 +491,44 @@ const onFinish = async values => {
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="purchaseBrand" label="Brand">
-                <Select mode="multiple" placeholder="Select brand">
+                {/* <Select mode="multiple" placeholder="Select brand">
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Brand1">Brand1</Select.Option>
                   <Select.Option value="Brand2">Brand2</Select.Option>
-                </Select>
+                </Select> */}
+                 <Select mode="multiple" placeholder="Select brand">
+                    {brands.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
+                   {/* {options.brands.map(b => (
+                    <Select.Option key={b} value={b}>
+                      {b}
+                    </Select.Option>
+                  ))} */}
 
-                 {/* <Select mode="multiple" placeholder="Select purchase branches">
-                    {branches.map(b => <Option key={b} value={b}>{b}</Option>)}
+                 {/* <Select mode="multiple" placeholder="Select purchase brands">
+                    {brands.map(b => <Option key={b} value={b}>{b}</Option>)}
                   </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item name="section" label="Section">
-                <Select mode="multiple" placeholder="Select section">
+                {/* <Select mode="multiple" placeholder="Select section">
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Section1">Section1</Select.Option>
                   <Select.Option value="Section2">Section2</Select.Option>
-                </Select>
+                </Select> */}
+
+                <Select mode="multiple" placeholder="Select Section">
+                    {sections.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
 
                  {/* <Select mode="multiple" placeholder="Select sections">
                   {sections.map(s => <Option key={s} value={s}>{s}</Option>)}
@@ -419,11 +537,19 @@ const onFinish = async values => {
             </Col>
             <Col span={8}>
               <Form.Item name="product" label="Product">
-                <Select mode="multiple" placeholder="Select product">
+                {/* <Select mode="multiple" placeholder="Select product">
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Product1">Product1</Select.Option>
                   <Select.Option value="Product2">Product2</Select.Option>
-                </Select>
+                </Select> */}
+
+                <Select mode="multiple" placeholder="Select Product">
+                    {products.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
 
                 {/* <Select mode="multiple" placeholder="Select products">
                   {products.map(p => <Option key={p} value={p}>{p}</Option>)}
@@ -435,11 +561,18 @@ const onFinish = async values => {
           <Row gutter={16} style={{ marginTop: 16 }}>
             <Col span={8}>
               <Form.Item name="model" label="Model">
-                <Select mode="multiple" placeholder="Select model">
+                {/* <Select mode="multiple" placeholder="Select model">
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Model1">Model1</Select.Option>
                   <Select.Option value="Model2">Model2</Select.Option>
-                </Select>
+                </Select> */}
+                <Select mode="multiple" placeholder="Select Model">
+                    {models.map(b => (
+                      <Option key={b} value={b}>
+                        {b}
+                      </Option>
+                    ))}
+                  </Select>
                   {/* <Select mode="multiple" placeholder="Select models">
                     {models.map(m => <Option key={m} value={m}>{m}</Option>)}
                   </Select> */}

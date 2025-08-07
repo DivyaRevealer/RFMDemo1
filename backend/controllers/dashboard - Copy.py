@@ -5,8 +5,8 @@ from datetime import date
 from fastapi import Query
 
 from database import get_db
-from models.crm_analysis2 import CRMAnalysis2 as CRMAnalysisModel
-from schemas.crm_analysis2 import CRMAnalysis2 as CRMAnalysisSchema
+from models.crm_analysis import CRMAnalysis as CRMAnalysisModel
+from schemas.crm_analysis import CRMAnalysis as CRMAnalysisSchema
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models.crm_analysis import CRMAnalysis as CRMAnalysisModel
+from models.crm_analysis2 import CRMAnalysis2 as CRMAnalysisModel
 from schemas.filters import FilterOptions
 
 router = APIRouter(prefix="/filters", tags=["filters"])
