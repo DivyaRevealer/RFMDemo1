@@ -1,11 +1,33 @@
-import React from 'react';
-import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input } from 'antd';
+//import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox  } from 'antd';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
+//const { RangePicker, DatePicker: SingleDatePicker } = DatePicker;
 
 export default function Create_Campaign() {
   const [form] = Form.useForm();
+   const [options, setOptions] = useState({
+    segments: [],
+    branches: [],
+    cities: [],
+    states: [],
+    sections: [],
+    products: [],
+  });
+
+  useEffect(() => {
+    async function fetchOptions() {
+      try {
+        const res = await axios.get('http://localhost:8000/campaign/options');
+        setOptions(res.data);
+      } catch (err) {
+        console.error('Failed to load campaign options', err);
+      }
+    }
+    fetchOptions();
+  }, []);
 
   const onFinish = (values) => {
     console.log('Campaign configuration:', values);
@@ -28,8 +50,8 @@ export default function Create_Campaign() {
         </Card>
 
         {/* Customer Selection */}
-        <Card title="Customer Selection" style={{ marginTop: 5 }}>
-          <Title level={5} style={{ marginTop: 5 }}>RFM Parameters</Title>
+        <Card title="RFM Parameters" style={{ marginTop: 5 }}>
+          {/* <Title level={5} style={{ marginTop: 5 }}>RFM Parameters</Title> */}
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item
@@ -37,8 +59,16 @@ export default function Create_Campaign() {
                 label="Recency (Days)"
                 rules={[{ required: true }]}
               >
-                <InputNumber placeholder="Min" style={{ width: '45%', marginRight: '10%' }} />
-                <InputNumber placeholder="Max" style={{ width: '45%' }} />
+
+                <Select placeholder="Operator" style={{ width: '45%', marginRight: '10%' }} >
+                  <Select.Option value="=">=</Select.Option>
+                  <Select.Option value=">=">≥</Select.Option>
+                  <Select.Option value="<=">≤</Select.Option>
+                  <Select.Option value="between">Between</Select.Option>
+                </Select>
+                 <InputNumber placeholder="Max" style={{ width: '45%' }} />
+                {/* <InputNumber placeholder="Min" style={{ width: '45%', marginRight: '10%' }} /> */}
+                {/* <InputNumber placeholder="Max" style={{ width: '45%' }} /> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -109,6 +139,9 @@ export default function Create_Campaign() {
               <Select.Option value="New Customers">New Customers</Select.Option>
               <Select.Option value="At Risk">At Risk</Select.Option>
               <Select.Option value="Lost">Lost</Select.Option>
+               {/* {options.segments.map((seg) => (
+                <Select.Option key={seg} value={seg}>{seg}</Select.Option>
+              ))} */}
             </Select>
           </Form.Item>
         </Card>
@@ -122,6 +155,9 @@ export default function Create_Campaign() {
                   <Select.Option value="All">All</Select.Option>
                   <Select.Option value="Branch A">Branch A</Select.Option>
                   <Select.Option value="Branch B">Branch B</Select.Option>
+                   {/* {options.branches.map((b) => (
+                    <Select.Option key={b} value={b}>{b}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
@@ -129,8 +165,11 @@ export default function Create_Campaign() {
               <Form.Item name="city" label="City">
                 <Select placeholder="Select city">
                   <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="City X">City X</Select.Option>
-                  <Select.Option value="City Y">City Y</Select.Option>
+                  <Select.Option value="City1">City1</Select.Option>
+                  <Select.Option value="City2">City2</Select.Option>
+                  {/* {options.cities.map((c) => (
+                    <Select.Option key={c} value={c}>{c}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
@@ -138,13 +177,58 @@ export default function Create_Campaign() {
               <Form.Item name="state" label="State">
                 <Select placeholder="Select state">
                   <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="State 1">State 1</Select.Option>
-                  <Select.Option value="State 2">State 2</Select.Option>
+                  <Select.Option value="State1">State1</Select.Option>
+                  <Select.Option value="State2">State2</Select.Option>
+                   {/* {options.states.map((s) => (
+                    <Select.Option key={s} value={s}>{s}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
           </Row>
         </Card>
+
+          {/* Occasions */}
+        <Card title="Occasions" style={{ marginTop: 5 }} bodyStyle={{ padding: 12 }}>
+          {/* <Form.Item
+            name="occasions"
+            label="Occasion Type"
+            rules={[{ required: true, message: 'Select at least one occasion' }]}
+            style={{ marginBottom: 8 }}
+          >
+            <Checkbox.Group
+              options={[
+                { label: 'Birthday', value: 'birthday' },
+                { label: 'Anniversary', value: 'anniversary' }
+              ]}
+            />
+          </Form.Item> */}
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="birthdayDate"
+                label="Birthday Date"
+                rules={[{ required: ({ getFieldValue }) => getFieldValue('occasions')?.includes('birthday'), message: 'Select a birthday date' }]}
+                style={{ marginBottom: 8 }}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="anniversaryDate"
+                label="Anniversary Date"
+                rules={[{ required: ({ getFieldValue }) => getFieldValue('occasions')?.includes('anniversary'), message: 'Select an anniversary date' }]}
+                style={{ marginBottom: 0 }}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
+
+
 
         {/* Purchase */}
         <Card title="Purchase" style={{ marginTop: 5 }}>
@@ -164,8 +248,11 @@ export default function Create_Campaign() {
               <Form.Item name="purchaseBranch" label="Branch">
                 <Select placeholder="Select branch">
                   <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="Branch A">Branch A</Select.Option>
-                  <Select.Option value="Branch B">Branch B</Select.Option>
+                  <Select.Option value="Branch1">Branch1</Select.Option>
+                  <Select.Option value="Branch2">Branch2</Select.Option>
+                  {/* {options.branches.map((b) => (
+                    <Select.Option key={b} value={b}>{b}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
@@ -173,8 +260,11 @@ export default function Create_Campaign() {
               <Form.Item name="section" label="Section">
                 <Select placeholder="Select section">
                   <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="Section 1">Section 1</Select.Option>
-                  <Select.Option value="Section 2">Section 2</Select.Option>
+                  <Select.Option value="Section1">Section1</Select.Option>
+                  <Select.Option value="Section2">Section2</Select.Option>
+                  {/* {options.sections.map((s) => (
+                    <Select.Option key={s} value={s}>{s}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
@@ -182,8 +272,11 @@ export default function Create_Campaign() {
               <Form.Item name="product" label="Product">
                 <Select placeholder="Select product">
                   <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="Product X">Product X</Select.Option>
-                  <Select.Option value="Product Y">Product Y</Select.Option>
+                  <Select.Option value="Product1">Product1</Select.Option>
+                  <Select.Option value="Product2">Product2</Select.Option>
+                  {/* {options.products.map((p) => (
+                    <Select.Option key={p} value={p}>{p}</Select.Option>
+                  ))} */}
                 </Select>
               </Form.Item>
             </Col>
