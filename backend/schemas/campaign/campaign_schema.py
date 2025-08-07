@@ -3,6 +3,7 @@ from typing import List, Optional, Dict
 from pydantic import BaseModel
 
 class CampaignBase(BaseModel):
+    name:             str
     start_date:       date
     end_date:         date
     recency_op:       str

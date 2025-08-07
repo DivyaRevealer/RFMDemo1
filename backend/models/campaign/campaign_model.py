@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, Date, DateTime, DECIMAL, JSON, func
+from sqlalchemy import Column, Integer, Date, DateTime, DECIMAL, JSON,String, func
 from database import Base
 
 class Campaign(Base):
     __tablename__ = "campaigns"
 
     id               = Column(Integer, primary_key=True, index=True)
+    name             = Column(String(255), nullable=False)
     start_date       = Column(Date,   nullable=False)
     end_date         = Column(Date,   nullable=False)
 

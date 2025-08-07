@@ -72,6 +72,7 @@ export default function Create_Campaign() {
       .then(res => {
         const data = res.data;
         form.setFieldsValue({
+          name: data.name,
           campaignPeriod: [dayjs(data.start_date), dayjs(data.end_date)],
           recencyOp: data.recency_op,
           recencyMin: data.recency_min,
@@ -125,6 +126,7 @@ const onFinish = async values => {
   alert("inside")
   const [startMoment, endMoment] = values.campaignPeriod;
   const payload = {
+    name:             values.name,
     start_date:       startMoment.format('YYYY-MM-DD'),
     end_date:         endMoment.format('YYYY-MM-DD'),
 
@@ -199,7 +201,16 @@ const onFinish = async values => {
       <Title level={2}>{isEditing ? 'Update Campaign' : 'Create Campaign'}</Title>
       <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Campaign Period */}
-        <Card title="Campaign Period" style={{ marginTop: 15 }}>
+        {/* <Card title="Campaign Period" style={{ marginTop: 15 }}> */}
+         {/* Campaign Details */}
+        {/* <Card title="Campaign Details" style={{ marginTop: 15 }}>
+          <Form.Item
+            name="name"
+            label="Name"
+            rules={[{ required: true, message: 'Please enter campaign name' }]}
+          >
+            <Input />
+          </Form.Item>
           <Form.Item
             name="campaignPeriod"
             label="Period"
@@ -207,6 +218,29 @@ const onFinish = async values => {
           >
             <RangePicker style={{ width: '100%' }} />
           </Form.Item>
+        </Card> */}
+
+        <Card title="Campaign Details" style={{ marginTop: 15 }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="name"
+                label="Name"
+                rules={[{ required: true, message: 'Please enter campaign name' }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="campaignPeriod"
+                label="Period"
+                rules={[{ required: true, message: 'Please select campaign dates' }]}
+              >
+                <RangePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
         </Card>
 
         {/* Customer Selection */}
