@@ -1,4 +1,3 @@
-import { message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox } from 'antd';
@@ -17,28 +16,34 @@ export default function Create_Campaign() {
   //   products: [],
   // });
 
-  const [options, setOptions] = useState({
-    r_scores: [],
-    f_scores: [],
-    m_scores: [],
-    rfm_segments: [],
-
-    branches: [],
-    branchCityMap: {},
-    branchStateMap: {},
-
-    sections: [],
-    products: [],
-    models: [],
-    items: []
+   const [opts, setOpts] = useState({
+    r_scores: [], f_scores: [], m_scores: [], rfm_segments: [],
+    branches: [], branch_city_map: {}, branch_state_map: {},
+    sections: [], products: [], models: [], items: []
   });
 
-  
   useEffect(() => {
     axios.get('http://localhost:8000/campaign/options')
-      .then(res => setOptions(res.data))
+      .then(res => setOpts(res.data))
       .catch(() => message.error('Failed to load filters'));
   }, []);
+
+
+  const {
+    r_scores, f_scores, m_scores, rfm_segments,
+    branches, branch_city_map, branch_state_map,
+    sections, products, models, items
+  } = opts;
+
+  // helper for cascading city/state
+  const selectedBranches = Form.useFormInstance().getFieldValue('branch') || [];
+  const cityOptions = Array.from(
+    new Set(selectedBranches.flatMap(b => branch_city_map[b] || []))
+  );
+  const stateOptions = Array.from(
+    new Set(selectedBranches.flatMap(b => branch_state_map[b] || []))
+  );
+
 
 
   // const onFinish = (values) => {
@@ -46,7 +51,6 @@ export default function Create_Campaign() {
   //   // TODO: submit to API
   // };
 const onFinish = async values => {
-  alert("inside")
   const [startMoment, endMoment] = values.campaignPeriod;
   const payload = {
     start_date:       startMoment.format('YYYY-MM-DD'),
@@ -54,24 +58,15 @@ const onFinish = async values => {
 
     recency_op:       values.recencyOp,
     recency_min:      values.recencyMin,
-    ...(values.recencyOp === 'between'
-    ? { recency_max: values.recencyMax }
-    : { recency_max: values.recencyMin }),
-   // recency_max:      values.recencyMax,
+    recency_max:      values.recencyMax,
 
     frequency_op:     values.frequencyOp,
     frequency_min:    values.frequencyMin,
-    ...(values.frequencyOp === 'between'
-    ? { frequency_max: values.frequencyMax }
-    : { frequency_max: values.frequencyMin }),
-    //frequency_max:    values.frequencyMax,
+    frequency_max:    values.frequencyMax,
 
     monetary_op:      values.monetaryOp,
     monetary_min:     values.monetaryMin,
-    ...(values.monetaryOp === 'between'
-    ? { monetary_max: values.monetaryMax }
-    : { monetary_max: values.monetaryMin }),
-    //monetary_max:     values.monetaryMax,
+    monetary_max:     values.monetaryMax,
 
     r_score:          values.rScore,
     f_score:          values.fScore,
@@ -86,7 +81,7 @@ const onFinish = async values => {
     anniversary_date: values.anniversaryDate?.format('YYYY-MM-DD'),
 
     purchase_type:    values.purchaseType,
-    purchase_brand:   values.purchaseBrand,
+    purchase_branch:  values.purchaseBranch,
     section:          values.section,
     product:          values.product,
 
@@ -96,14 +91,11 @@ const onFinish = async values => {
   };
 
   try {
-    
-    //await axios.post('http://localhost:8000/campaign/', payload);
-    await axios.post('http://localhost:8000/campaign/createCampaign', payload);
+    await axios.post('http://localhost:8000/campaign', payload);
     message.success('Campaign saved successfully');
     form.resetFields();
   } catch (err) {
     console.error(err);
-    console.error('🚨 Save failed:', err.response ? err.response.data : err);
     message.error('Failed to save campaign');
   }
 };
@@ -261,10 +253,6 @@ const onFinish = async values => {
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
                 </Select>
-
-                 {/* <Select mode="multiple" placeholder="Select R-Scores">
-                  {r_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -274,9 +262,6 @@ const onFinish = async values => {
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
                 </Select>
-                  {/* <Select mode="multiple" placeholder="Select F-Scores">
-                    {f_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
-                  </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -286,9 +271,6 @@ const onFinish = async values => {
                     <Select.Option key={i} value={i}>{i}</Select.Option>
                   ))}
                 </Select>
-                 {/* <Select mode="multiple" placeholder="Select M-Scores">
-                    {m_scores.map(n => <Option key={n} value={n}>{n}</Option>)}
-                  </Select> */}
               </Form.Item>
             </Col>
           </Row>
@@ -302,9 +284,6 @@ const onFinish = async values => {
               <Select.Option value="At Risk">At Risk</Select.Option>
               <Select.Option value="Lost">Lost</Select.Option>
             </Select>
-             {/* <Select mode="multiple" placeholder="Select segments">
-              {rfm_segments.map(seg => <Option key={seg} value={seg}>{seg}</Option>)}
-            </Select> */}
           </Form.Item>
         </Card>
 
@@ -318,9 +297,6 @@ const onFinish = async values => {
                   <Select.Option value="Branch A">Branch A</Select.Option>
                   <Select.Option value="Branch B">Branch B</Select.Option>
                 </Select>
-                {/* <Select mode="multiple" placeholder="Select branches">
-                {branches.map(b => <Option key={b} value={b}>{b}</Option>)}
-              </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -330,9 +306,6 @@ const onFinish = async values => {
                   <Select.Option value="City1">City1</Select.Option>
                   <Select.Option value="City2">City2</Select.Option>
                 </Select>
-                 {/* <Select mode="multiple" placeholder="Select cities">
-                  {cityOptions.map(c => <Option key={c} value={c}>{c}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -342,10 +315,6 @@ const onFinish = async values => {
                   <Select.Option value="State1">State1</Select.Option>
                   <Select.Option value="State2">State2</Select.Option>
                 </Select>
-
-                {/* <Select mode="multiple" placeholder="Select states">
-                  {stateOptions.map(s => <Option key={s} value={s}>{s}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
           </Row>
@@ -396,10 +365,6 @@ const onFinish = async values => {
                   <Select.Option value="Brand1">Brand1</Select.Option>
                   <Select.Option value="Brand2">Brand2</Select.Option>
                 </Select>
-
-                 {/* <Select mode="multiple" placeholder="Select purchase branches">
-                    {branches.map(b => <Option key={b} value={b}>{b}</Option>)}
-                  </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -409,10 +374,6 @@ const onFinish = async values => {
                   <Select.Option value="Section1">Section1</Select.Option>
                   <Select.Option value="Section2">Section2</Select.Option>
                 </Select>
-
-                 {/* <Select mode="multiple" placeholder="Select sections">
-                  {sections.map(s => <Option key={s} value={s}>{s}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -422,10 +383,6 @@ const onFinish = async values => {
                   <Select.Option value="Product1">Product1</Select.Option>
                   <Select.Option value="Product2">Product2</Select.Option>
                 </Select>
-
-                {/* <Select mode="multiple" placeholder="Select products">
-                  {products.map(p => <Option key={p} value={p}>{p}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
           </Row>
@@ -438,9 +395,6 @@ const onFinish = async values => {
                   <Select.Option value="Model1">Model1</Select.Option>
                   <Select.Option value="Model2">Model2</Select.Option>
                 </Select>
-                  {/* <Select mode="multiple" placeholder="Select models">
-                    {models.map(m => <Option key={m} value={m}>{m}</Option>)}
-                  </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -450,9 +404,6 @@ const onFinish = async values => {
                   <Select.Option value="Item1">Item1</Select.Option>
                   <Select.Option value="Item2">Item2</Select.Option>
                 </Select>
-                {/* <Select mode="multiple" placeholder="Select items">
-                  {items.map(i => <Option key={i} value={i}>{i}</Option>)}
-                </Select> */}
               </Form.Item>
             </Col>
             <Col span={8}>
