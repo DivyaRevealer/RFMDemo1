@@ -28,10 +28,61 @@ export default function Create_Campaign() {
     fetchOptions();
   }, []);
 
-  const onFinish = (values) => {
-    console.log('Campaign configuration:', values);
-    // TODO: submit to API
-  };
+  // const onFinish = (values) => {
+  //   console.log('Campaign configuration:', values);
+  //   // TODO: submit to API
+  // };
+
+  const onFinish = async (values) => {
+     // 1. pull out and format the dates
+     const [startMoment, endMoment] = values.campaignPeriod;
+     const payload = {
+       start_date: startMoment.format('YYYY-MM-DD'),
+       end_date:   endMoment.format('YYYY-MM-DD'),
+ 
+       // 2. RFM filters
+       recency_op:    values.recencyRange,     // e.g. ['between'] or ['>=']
+       recency_min:   values.recencyMin,       // add a <Form.Item name="recencyMin"> if needed
+       recency_max:   values.recencyMax,
+       frequency_min: values.frequencyRange[0],
+       frequency_max: values.frequencyRange[1],
+       monetary_min:  values.monetaryRange[0],
+       monetary_max:  values.monetaryRange[1],
+       r_score:       values.rScore,           // array of selected scores
+       f_score:       values.fScore,
+       m_score:       values.mScore,
+       rfm_segments:  values.rfmSegment,       // array of strings
+ 
+       // 3. Geography
+       branch:  values.branch,
+       city:    values.city,
+       state:   values.state,
+ 
+       // 4. Occasions
+       birthday_date:    values.birthdayDate?.format('YYYY-MM-DD'),
+       anniversary_date: values.anniversaryDate?.format('YYYY-MM-DD'),
+ 
+       // 5. Purchase
+       purchase_type:   values.purchaseType,
+       purchase_branch: values.purchaseBranch,
+       section:         values.section,
+       product:         values.product,
+ 
+       // 6. Model / Item / Value
+       model:           values.model,
+       item:            values.item,
+       value_threshold: values.valueThreshold,
+     };
+ 
+     try {
+       await axios.post('http://localhost:8000/campaign', payload);
+       message.success('Campaign saved successfully');
+       form.resetFields();
+     } catch (err) {
+       console.error(err);
+       message.error('Failed to save campaign');
+     }
+   };
 
   return (
     <div style={{ fontWeight: 'bold', padding: 5, background: '#f0f2f5', minHeight: '50vh' }}>

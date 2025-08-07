@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Depends
+from typing import Any, Dict
+
+from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.crm_analysis import CRMAnalysis as CRMAnalysisModel
+
 from schemas.campaign import CampaignOptions
 
 router = APIRouter(prefix="/campaign", tags=["campaign"])
