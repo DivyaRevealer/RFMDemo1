@@ -3,11 +3,16 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox } from 'antd';
 import api from '../api';
+import { useSearchParams } from 'react-router-dom';
+import dayjs from 'dayjs';
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 export default function Create_Campaign() {
   const [form] = Form.useForm();
+  const [searchParams] = useSearchParams();
+  const campaignId = searchParams.get('campaignId');
+  const isEditing = !!campaignId;
   // const [options, setOptions] = useState({
   //   segments: [],
   //   branches: [],
@@ -59,6 +64,45 @@ export default function Create_Campaign() {
         setOptions(res.data)})
       .catch(() => message.error('Failed to load filters'));
   }, []);
+
+  useEffect(() => {
+    if (!campaignId) return;
+    api
+      .get(`/campaign/${campaignId}`)
+      .then(res => {
+        const data = res.data;
+        form.setFieldsValue({
+          campaignPeriod: [dayjs(data.start_date), dayjs(data.end_date)],
+          recencyOp: data.recency_op,
+          recencyMin: data.recency_min,
+          recencyMax: data.recency_max,
+          frequencyOp: data.frequency_op,
+          frequencyMin: data.frequency_min,
+          frequencyMax: data.frequency_max,
+          monetaryOp: data.monetary_op,
+          monetaryMin: data.monetary_min,
+          monetaryMax: data.monetary_max,
+          rScore: data.r_score,
+          fScore: data.f_score,
+          mScore: data.m_score,
+          rfmSegment: data.rfm_segments,
+          branch: data.branch,
+          city: data.city,
+          state: data.state,
+          birthdayDate: data.birthday_date ? dayjs(data.birthday_date) : null,
+          anniversaryDate: data.anniversary_date ? dayjs(data.anniversary_date) : null,
+          purchaseType: data.purchase_type,
+          purchaseBrand: data.purchase_brand,
+          section: data.section,
+          product: data.product,
+          model: data.model,
+          item: data.item,
+          valueThreshold: data.value_threshold,
+        });
+      })
+      .catch(() => message.error('Failed to load campaign'));
+  }, [campaignId, form]);
+
 
 //   useEffect(() => {
 //   const fetchOptions = async () => {
@@ -132,8 +176,15 @@ const onFinish = async values => {
     //await axios.post('http://localhost:8000/campaign/', payload);
     //await axios.post('http://localhost:8000/campaign/createCampaign/', payload);
    // axios.get('http://localhost:8000/campaign/options')
-    await api.post('/campaign/createCampaign', payload);
-    message.success('Campaign saved successfully');
+    // await api.post('/campaign/createCampaign', payload);
+    // message.success('Campaign saved successfully');
+      if (campaignId) {
+      await api.put(`/campaign/${campaignId}`, payload);
+      message.success('Campaign updated successfully');
+    } else {
+      await api.post('/campaign/createCampaign', payload);
+      message.success('Campaign saved successfully');
+    }
    // form.resetFields();
   } catch (err) {
     console.error(err);
@@ -144,7 +195,8 @@ const onFinish = async values => {
 
   return (
     <div style={{ fontWeight: 'bold', padding: 5, background: '#f0f2f5', minHeight: '50vh' }}>
-      <Title level={2}>Create Campaign</Title>
+      {/* <Title level={2}>Create Campaign</Title> */}
+      <Title level={2}>{isEditing ? 'Update Campaign' : 'Create Campaign'}</Title>
       <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Campaign Period */}
         <Card title="Campaign Period" style={{ marginTop: 15 }}>
@@ -606,7 +658,8 @@ const onFinish = async values => {
         {/* Submit button */}
         <Form.Item style={{ textAlign: 'center', marginTop: 5 }}>
           <Button type="primary" htmlType="submit" size="large">
-            Create Campaign
+            {/* Create Campaign */}
+             {isEditing ? 'Update Campaign' : 'Create Campaign'}
           </Button>
         </Form.Item>
       </Form>

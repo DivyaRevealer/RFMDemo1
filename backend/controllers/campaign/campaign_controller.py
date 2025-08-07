@@ -161,3 +161,21 @@ def create_campaign(db: Session, data: CampaignCreate) -> Campaign:
     db.refresh(db_obj)
     return db_obj
 
+def list_campaigns(db: Session):
+    """Return all campaigns."""
+    return db.query(Campaign).order_by(Campaign.id.desc()).all()
+
+def get_campaign(db: Session, campaign_id: int):
+    """Fetch a single campaign by ID."""
+    return db.query(Campaign).filter(Campaign.id == campaign_id).first()
+
+def update_campaign(db: Session, campaign_id: int, data: CampaignCreate):
+    """Update an existing campaign."""
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        return None
+    for field, value in data.dict().items():
+        setattr(campaign, field, value)
+    db.commit()
+    db.refresh(campaign)
+    return campaign

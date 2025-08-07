@@ -5,6 +5,7 @@ import Dashboard from "./components/Dashboard";
 import Create_Campaign from "./components/Create_Campaign";
 import Run_Campaign from "./components/Run_Campaign";
 import Layout from "./components/Layout";
+import Campaign_Summary from "./components/Campaign_Summary";
 
 const isAuthenticated = () => !!localStorage.getItem("token");
 const PrivateRoute = ({ children }) =>
@@ -40,6 +41,19 @@ export default function App() {
             </PrivateRoute>
           }
         />
+
+         {/* Protected Campaign Summary page */}
+        <Route
+          path="/campaign-summary"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <Campaign_Summary />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
 
         {/* Protected Run Campaign page */}
         <Route
