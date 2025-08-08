@@ -287,25 +287,6 @@ const { brands, sections, products, models, items, brand_hierarchy, r_scores, f_
   }, [watchPurchaseBrand, watchSection, watchProduct, watchModel, watchItem, brand_hierarchy]);
   
 
-  useEffect(() => {
-    const { allowedBrands, allowedSections, allowedProducts, allowedModels, allowedItems } = computeBrandOptions();
-    const pruned = {
-      purchaseBrand: watchPurchaseBrand.filter(b => allowedBrands.includes(b)),
-      section: watchSection.filter(s => allowedSections.includes(s)),
-      product: watchProduct.filter(p => allowedProducts.includes(p)),
-      model: watchModel.filter(m => allowedModels.includes(m)),
-      item: watchItem.filter(i => allowedItems.includes(i)),
-    };
-    if (
-      pruned.purchaseBrand.length !== watchPurchaseBrand.length ||
-      pruned.section.length      !== watchSection.length      ||
-      pruned.product.length      !== watchProduct.length      ||
-      pruned.model.length        !== watchModel.length        ||
-      pruned.item.length         !== watchItem.length
-    ) {
-      form.setFieldsValue(pruned);
-    }
-  }, [watchPurchaseBrand, watchSection, watchProduct, watchModel, watchItem, brand_hierarchy]);
 
   // ---------- reusable multi-select dropdown with “All” ----------
   const MultiSelectDropdown = ({ name, label, optionsProvider, placeholder }) => {
