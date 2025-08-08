@@ -30,8 +30,13 @@ class Campaign(Base):
     city             = Column(JSON)
     state            = Column(JSON)
 
-    birthday_date    = Column(Date)
-    anniversary_date = Column(Date)
+    # birthday_date    = Column(Date)
+    # anniversary_date = Column(Date)
+
+    birthday_start   = Column(Date)
+    birthday_end     = Column(Date)
+    anniversary_start = Column(Date)
+    anniversary_end   = Column(Date)
 
     purchase_type    = Column(JSON,   nullable=False)
     purchase_brand  = Column(JSON)

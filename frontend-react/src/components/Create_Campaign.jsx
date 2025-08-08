@@ -67,8 +67,16 @@ export default function Create_Campaign() {
           branch: data.branch,
           city: data.city,
           state: data.state,
-          birthdayDate: data.birthday_date ? dayjs(data.birthday_date) : null,
-          anniversaryDate: data.anniversary_date ? dayjs(data.anniversary_date) : null,
+          // birthdayDate: data.birthday_date ? dayjs(data.birthday_date) : null,
+          // anniversaryDate: data.anniversary_date ? dayjs(data.anniversary_date) : null,
+          birthdayRange:
+          data.birthday_start && data.birthday_end
+            ? [dayjs(data.birthday_start), dayjs(data.birthday_end)]
+            : null,
+          anniversaryRange:
+          data.anniversary_start && data.anniversary_end
+            ? [dayjs(data.anniversary_start), dayjs(data.anniversary_end)]
+            : null,
           purchaseType: data.purchase_type,
           purchaseBrand: data.purchase_brand,
           section: data.section,
@@ -115,8 +123,12 @@ export default function Create_Campaign() {
       city:             values.city,
       state:            values.state,
 
-      birthday_date:    values.birthdayDate?.format('YYYY-MM-DD'),
-      anniversary_date: values.anniversaryDate?.format('YYYY-MM-DD'),
+      // birthday_date:    values.birthdayDate?.format('YYYY-MM-DD'),
+      // anniversary_date: values.anniversaryDate?.format('YYYY-MM-DD'),
+      birthday_start:   values.birthdayRange?.[0]?.format('YYYY-MM-DD'),
+      birthday_end:     values.birthdayRange?.[1]?.format('YYYY-MM-DD'),
+      anniversary_start: values.anniversaryRange?.[0]?.format('YYYY-MM-DD'),
+      anniversary_end:   values.anniversaryRange?.[1]?.format('YYYY-MM-DD'),
 
       purchase_type:    values.purchaseType,
       purchase_brand:   values.purchaseBrand,
@@ -340,7 +352,7 @@ export default function Create_Campaign() {
     return (
       <>
         {mode === 'customized' && (
-          <Card title="RFM Customized" style={{ marginTop: 5 }}>
+          <Card style={{ marginTop: 5 }}>
             <Row gutter={16}>
               {/* Recency */}
               <Col span={8}>
@@ -568,10 +580,9 @@ export default function Create_Campaign() {
             <Col span={8}>
               <Form.Item name="item" label="Item">
                 <Select mode="multiple" placeholder="Select item" maxTagCount="responsive">
-                  {/* Replace with dynamic items if available */}
-                  <Select.Option value="All">All</Select.Option>
-                  <Select.Option value="Item1">Item1</Select.Option>
-                  <Select.Option value="Item2">Item2</Select.Option>
+                  {models.map(b => (
+                    <Option key={b} value={b}>{b}</Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>

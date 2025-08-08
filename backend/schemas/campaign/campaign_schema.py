@@ -18,13 +18,15 @@ class CampaignBase(BaseModel):
     r_score:          Optional[List[int]]= None
     f_score:          Optional[List[int]]= None
     m_score:          Optional[List[int]]= None
-    rfm_segments:     List[str]
+    rfm_segments:     Optional[List[str]] = None
     branch:           Optional[List[str]]= None
     city:             Optional[List[str]]= None
     state:            Optional[List[str]]= None
-    birthday_date:    Optional[date]= None
-    anniversary_date: Optional[date]= None
-    purchase_type:    List[str]
+    birthday_start:     Optional[date]= None
+    birthday_end:       Optional[date]= None
+    anniversary_start:  Optional[date]= None
+    anniversary_end:    Optional[date]= None
+    purchase_type:    str 
     purchase_brand:  Optional[List[str]]= None
     section:          Optional[List[str]]= None
     product:          Optional[List[str]]= None
