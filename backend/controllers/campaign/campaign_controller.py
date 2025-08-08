@@ -99,42 +99,26 @@ def get_campaign_options(db: Session) -> CampaignOptions:
         CampaignBrandFilter.item,
     ).all()
    # brands = sorted({r.brand for r in bd_rows})
+    brands   = sorted({r.brand   for r in bd_rows if r.brand   is not None})
+    sections = sorted({r.section for r in bd_rows if r.section is not None})
+    products = sorted({r.product for r in bd_rows if r.product is not None})
+    models   = sorted({r.model   for r in bd_rows if r.model   is not None})
+    items    = sorted({r.item    for r in bd_rows if r.item    is not None})
 
-    brands = sorted({
-    r.brand
-    for r in bd_rows
-    if r.brand is not None
-})
-    # sections = sorted({r.section for r in bd_rows})
-    sections = sorted({
-    r.section
-    for r in bd_rows
-    if r.section is not None
-})
-   # products = sorted({r.product for r in bd_rows})
-    products = sorted({
-    r.product
-    for r in bd_rows
-    if r.product is not None
-})
-    # models   = sorted({r.model   for r in bd_rows})
-    # items    = sorted({r.item    for r in bd_rows})
-   # models = sorted({r.model for r in bd_rows})
-    models = sorted({
-    r.model
-    for r in bd_rows
-    if r.model is not None
-})
-
-   # items = sorted({r.item for r in bd_rows})
-    items = sorted({
-    r.item
-    for r in bd_rows
-    if r.item is not None
-})
-
-    print("branches---- ",branches)
-
+    # ✅ NEW: full hierarchy objects (filter out completely empty rows)
+    brand_hierarchy = [
+        {
+            "brand":   r.brand,
+            "section": r.section,
+            "product": r.product,
+            "model":   r.model,
+            "item":    r.item,
+        }
+        for r in bd_rows
+        if any([r.brand, r.section, r.product, r.model, r.item])
+    ]
+   
+    print("brand_hierarchy------------",brand_hierarchy)
     return CampaignOptions(
       r_scores=r_scores,
       f_scores=f_scores,
@@ -150,7 +134,8 @@ def get_campaign_options(db: Session) -> CampaignOptions:
       sections=sections,
       products=products,
       models=models,
-      items=items
+      items=items,
+      brand_hierarchy=brand_hierarchy,
     )
 
 def create_campaign(db: Session, data: CampaignCreate) -> Campaign:

@@ -38,7 +38,7 @@ class Campaign(Base):
     anniversary_start = Column(Date)
     anniversary_end   = Column(Date)
 
-    purchase_type    = Column(String,   nullable=False)
+    purchase_type    = Column(String)
     purchase_brand  = Column(JSON)
     section          = Column(JSON)
     product          = Column(JSON)

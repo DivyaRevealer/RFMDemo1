@@ -29,7 +29,8 @@ export default function Create_Campaign() {
     sections: [],
     products: [],
     models: [],
-    items: []
+    items: [],
+    brand_hierarchy: []
   });
 
   
@@ -38,12 +39,7 @@ export default function Create_Campaign() {
   // ✅ flag so we only hydrate after options exist
   const [optionsLoaded, setOptionsLoaded] = useState(false);
   
-
-  const {
-    brands, sections, products, models, items,
-    r_scores, f_scores, m_scores, rfm_segments,
-    branches, branch_city_map, branch_state_map
-  } = options;
+const { brands, sections, products, models, items, brand_hierarchy, r_scores, f_scores, m_scores, rfm_segments, branches, branch_city_map, branch_state_map } = options;
 
   // ---------- helpers ----------
   const parseArr = (v) =>
@@ -75,11 +71,9 @@ export default function Create_Campaign() {
 
   api.get(`/campaign/${campaignId}`).then(res => {
     const data = res.data;
-
-    console.log("birthday_start---- ",data.birthday_start)
-    console.log("birthday_end---- ",data.birthday_end)
-    console.log("anniversary_start---- ",data.anniversary_start)
-    console.log("anniversary_end---- ",data.anniversary_end)
+    console.log("data-------------",data)
+    console.log("section---- ",data.section)
+   
     form.setFieldsValue({
       name: data.name,
       campaignPeriod: toRange(data.start_date, data.end_date),
@@ -190,6 +184,12 @@ export default function Create_Campaign() {
   const watchCity   = Form.useWatch('city', form)   || [];
   const watchState  = Form.useWatch('state', form)  || [];
 
+  const watchPurchaseBrand = Form.useWatch('purchaseBrand', form) || [];
+  const watchSection = Form.useWatch('section', form) || [];
+  const watchProduct = Form.useWatch('product', form) || [];
+  const watchModel = Form.useWatch('model', form) || [];
+  const watchItem = Form.useWatch('item', form) || [];
+
   const computeGeoOptions = () => {
     const allowedBranches = branches.filter(b => {
       const cities = branch_city_map?.[b] || [];
@@ -236,6 +236,76 @@ export default function Create_Campaign() {
       form.setFieldsValue(pruned);
     }
   }, [watchBranch, watchCity, watchState, branch_city_map, branch_state_map, branches, optionsLoaded]);
+
+  const computeBrandOptions = () => {
+    let filtered = brand_hierarchy || [];
+    console.log("brand_hierarchy---------------------",brand_hierarchy)
+    if (watchPurchaseBrand.length) {
+      filtered = filtered.filter(r => watchPurchaseBrand.includes(r.brand));
+    }
+    if (watchSection.length) {
+      filtered = filtered.filter(r => watchSection.includes(r.section));
+    }
+    if (watchProduct.length) {
+      filtered = filtered.filter(r => watchProduct.includes(r.product));
+    }
+    if (watchModel.length) {
+      filtered = filtered.filter(r => watchModel.includes(r.model));
+    }
+    if (watchItem.length) {
+      filtered = filtered.filter(r => watchItem.includes(r.item));
+    }
+
+    const allowedBrands = [...new Set(filtered.map(r => r.brand))];
+    const allowedSections = [...new Set(filtered.map(r => r.section))];
+    const allowedProducts = [...new Set(filtered.map(r => r.product))];
+    const allowedModels = [...new Set(filtered.map(r => r.model))];
+    const allowedItems = [...new Set(filtered.map(r => r.item))];
+
+    return { allowedBrands, allowedSections, allowedProducts, allowedModels, allowedItems };
+  };
+
+  useEffect(() => {
+    if (!optionsLoaded || !brand_hierarchy?.length) return; // prevent early pruning before options load
+    const { allowedBrands, allowedSections, allowedProducts, allowedModels, allowedItems } = computeBrandOptions();
+    const pruned = {
+      purchaseBrand: watchPurchaseBrand.filter(b => allowedBrands.includes(b)),
+      section: watchSection.filter(s => allowedSections.includes(s)),
+      product: watchProduct.filter(p => allowedProducts.includes(p)),
+      model: watchModel.filter(m => allowedModels.includes(m)),
+      item: watchItem.filter(i => allowedItems.includes(i)),
+    };
+    if (
+      pruned.purchaseBrand.length !== watchPurchaseBrand.length ||
+      pruned.section.length      !== watchSection.length      ||
+      pruned.product.length      !== watchProduct.length      ||
+      pruned.model.length        !== watchModel.length        ||
+      pruned.item.length         !== watchItem.length
+    ) {
+      form.setFieldsValue(pruned);
+    }
+  }, [watchPurchaseBrand, watchSection, watchProduct, watchModel, watchItem, brand_hierarchy]);
+  
+
+  useEffect(() => {
+    const { allowedBrands, allowedSections, allowedProducts, allowedModels, allowedItems } = computeBrandOptions();
+    const pruned = {
+      purchaseBrand: watchPurchaseBrand.filter(b => allowedBrands.includes(b)),
+      section: watchSection.filter(s => allowedSections.includes(s)),
+      product: watchProduct.filter(p => allowedProducts.includes(p)),
+      model: watchModel.filter(m => allowedModels.includes(m)),
+      item: watchItem.filter(i => allowedItems.includes(i)),
+    };
+    if (
+      pruned.purchaseBrand.length !== watchPurchaseBrand.length ||
+      pruned.section.length      !== watchSection.length      ||
+      pruned.product.length      !== watchProduct.length      ||
+      pruned.model.length        !== watchModel.length        ||
+      pruned.item.length         !== watchItem.length
+    ) {
+      form.setFieldsValue(pruned);
+    }
+  }, [watchPurchaseBrand, watchSection, watchProduct, watchModel, watchItem, brand_hierarchy]);
 
   // ---------- reusable multi-select dropdown with “All” ----------
   const MultiSelectDropdown = ({ name, label, optionsProvider, placeholder }) => {
@@ -534,80 +604,123 @@ export default function Create_Campaign() {
         </Card>
 
         {/* Product */}
-        <Card title="Product" style={{ marginTop: 5 }}>
-          <Form.Item
-            name="purchaseType"
-            label="Purchase Type"
-            rules={[{ required: true, message: 'Select purchase type' }]}
-          >
-            <Radio.Group>
-              <Radio value="any">Any Purchase</Radio>
-              <Radio value="recent">Recent Purchase</Radio>
-            </Radio.Group>
-          </Form.Item>
+<Card title="Product" style={{ marginTop: 5 }}>
+  <Form.Item
+    name="purchaseType"
+    label="Purchase Type"
+    rules={[{ required: true, message: 'Select purchase type' }]}
+  >
+    <Radio.Group>
+      <Radio value="any">Any Purchase</Radio>
+      <Radio value="recent">Recent Purchase</Radio>
+    </Radio.Group>
+  </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="purchaseBrand" label="Brand">
-                <Select mode="multiple" placeholder="Select brand" maxTagCount="responsive">
-                  {brands.map(b => (
-                    <Option key={b} value={b}>{b}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="section" label="Section">
-                <Select mode="multiple" placeholder="Select section" maxTagCount="responsive">
-                  {sections.map(b => (
-                    <Option key={b} value={b}>{b}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="product" label="Product">
-                <Select mode="multiple" placeholder="Select product" maxTagCount="responsive">
-                  {products.map(b => (
-                    <Option key={b} value={b}>{b}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+  <Row gutter={16}>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.section !== cur.section ||
+        prev.product !== cur.product ||
+        prev.model   !== cur.model   ||
+        prev.item    !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="purchaseBrand"
+            label="Brand"
+            placeholder="Select brands"
+            optionsProvider={() => computeBrandOptions().allowedBrands}
+          />
+        )}
+      </Form.Item>
+    </Col>
 
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={8}>
-              <Form.Item name="model" label="Model">
-                <Select mode="multiple" placeholder="Select model" maxTagCount="responsive">
-                  {models.map(b => (
-                    <Option key={b} value={b}>{b}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="item" label="Item">
-                <Select mode="multiple" placeholder="Select item" maxTagCount="responsive">
-                  {/* ✅ was models.map — now correct */}
-                  {items.map(b => (
-                    <Option key={b} value={b}>{b}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="valueThreshold" label="Value Threshold">
-                <InputNumber
-                  style={{ width: '100%' }}
-                  formatter={value => `₹ ${value}`}
-                  min={0}
-                  placeholder="e.g. ≥ 50000"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.product       !== cur.product       ||
+        prev.model         !== cur.model         ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="section"
+            label="Section"
+            placeholder="Select sections"
+            optionsProvider={() => computeBrandOptions().allowedSections}
+          />
+        )}
+      </Form.Item>
+    </Col>
+
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.model         !== cur.model         ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="product"
+            label="Product"
+            placeholder="Select products"
+            optionsProvider={() => computeBrandOptions().allowedProducts}
+          />
+        )}
+      </Form.Item>
+    </Col>
+  </Row>
+
+  <Row gutter={16} style={{ marginTop: 16 }}>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.product       !== cur.product       ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="model"
+            label="Model"
+            placeholder="Select models"
+            optionsProvider={() => computeBrandOptions().allowedModels}
+          />
+        )}
+      </Form.Item>
+    </Col>
+
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.product       !== cur.product       ||
+        prev.model         !== cur.model
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="item"
+            label="Item"
+            placeholder="Select items"
+            optionsProvider={() => computeBrandOptions().allowedItems}
+          />
+        )}
+      </Form.Item>
+    </Col>
+
+    <Col span={8}>
+      <Form.Item name="valueThreshold" label="Value Threshold">
+        <InputNumber
+          style={{ width: '100%' }}
+          formatter={value => `₹ ${value}`}
+          min={0}
+          placeholder="e.g. ≥ 50000"
+        />
+      </Form.Item>
+    </Col>
+  </Row>
+</Card>
 
         {/* Occasions */}
         <Card title="Occasions" style={{ marginTop: 5 }} bodyStyle={{ padding: 12 }}>

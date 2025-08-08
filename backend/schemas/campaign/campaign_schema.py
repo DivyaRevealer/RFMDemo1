@@ -62,6 +62,7 @@ class CampaignOptions(BaseModel):
     products:         List[str]
     models:           List[str]
     items:            List[str]
+    brand_hierarchy:  List[Dict[str, Optional[str]]]
 
     class Config:
         from_attributes = True
