@@ -26,7 +26,7 @@ class CampaignBase(BaseModel):
     birthday_end:       Optional[date]= None
     anniversary_start:  Optional[date]= None
     anniversary_end:    Optional[date]= None
-    purchase_type:    str 
+    purchase_type: Optional[str] 
     purchase_brand:  Optional[List[str]]= None
     section:          Optional[List[str]]= None
     product:          Optional[List[str]]= None
