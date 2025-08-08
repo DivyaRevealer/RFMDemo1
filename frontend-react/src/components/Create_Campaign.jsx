@@ -53,10 +53,11 @@ export default function Create_Campaign() {
     typeof v === 'string' ? v.replace(/^['"]+|['"]+$/g, '') : v;
 
   const toRange = (s, e) => {
-    const ds = s && dayjs(s);
-    const de = e && dayjs(e);
-    return (ds && ds.isValid() && de && de.isValid()) ? [ds, de] : null;
-  };
+  const clean = (v) => (typeof v === 'string' ? v.replace(/^['"]+|['"]+$/g, '') : v);
+  const ds = s ? dayjs(clean(s)) : null;
+  const de = e ? dayjs(clean(e)) : null;
+  return (ds && ds.isValid() && de && de.isValid()) ? [ds, de] : null;
+};
 
   // ---------- load options ----------
   useEffect(() => {
@@ -103,9 +104,10 @@ export default function Create_Campaign() {
       state:  parseArr(data.state),
 
       // ✅ the fix
-      birthdayRange:    toRange(data.birthday_start,    data.birthday_end),
-      anniversaryRange: toRange(data.anniversary_start, data.anniversary_end),
-
+      // birthdayRange:    toRange(data.birthday_start,    data.birthday_end),
+      // anniversaryRange: toRange(data.anniversary_start, data.anniversary_end),
+      birthdayRange:    toRange(stripQuotes(data.birthday_start),    stripQuotes(data.birthday_end)),
+      anniversaryRange: toRange(stripQuotes(data.anniversary_start), stripQuotes(data.anniversary_end)),
       purchaseType:  stripQuotes(data.purchase_type),
       purchaseBrand: parseArr(data.purchase_brand),
       section:       parseArr(data.section),

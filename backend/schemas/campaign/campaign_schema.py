@@ -33,6 +33,8 @@ class CampaignBase(BaseModel):
     model:            Optional[List[str]]= None
     item:             Optional[List[str]]= None
     value_threshold:  Optional[float]= None
+    class Config:
+        from_attributes = True
 
 class CampaignCreate(CampaignBase):
     pass
