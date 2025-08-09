@@ -66,3 +66,13 @@ class CampaignOptions(BaseModel):
 
     class Config:
         from_attributes = True
+
+    class CampaignRunDetails(BaseModel):
+        id: int
+        name: str
+        rfm_segment_label: str
+        brand_label: str
+        value_threshold: Optional[float] = None
+        shortlisted_count: int
+    class Config:
+        from_attributes = True
