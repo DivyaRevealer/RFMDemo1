@@ -6,6 +6,7 @@ import Create_Campaign from "./components/Create_Campaign";
 import Run_Campaign from "./components/Run_Campaign";
 import Layout from "./components/Layout";
 import Campaign_Summary from "./components/Campaign_Summary";
+import Campaign_Dashboard from "./components/Campaign_Dashboard";
 
 const isAuthenticated = () => !!localStorage.getItem("token");
 const PrivateRoute = ({ children }) =>
