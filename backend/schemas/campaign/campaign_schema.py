@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict,Any
 from pydantic import BaseModel
 
 class CampaignBase(BaseModel):
@@ -68,11 +68,52 @@ class CampaignOptions(BaseModel):
         from_attributes = True
 
 class CampaignRunDetails(BaseModel):
+    # id: int
+    # name: str
+    # rfm_segment_label: str
+    # brand_label: str
+    # value_threshold: Optional[float] = None
+    # shortlisted_count: int
+ 
     id: int
     name: str
+
+    # NEW: raw campaign filters/metadata
+    start_date: date
+    end_date: date
+    recency_op: Optional[Any] = None
+    recency_min: Optional[int] = None
+    recency_max: Optional[int] = None
+    frequency_op: Optional[Any] = None
+    frequency_min: Optional[int] = None
+    frequency_max: Optional[int] = None
+    monetary_op: Optional[Any] = None
+    monetary_min: Optional[float] = None
+    monetary_max: Optional[float] = None
+    r_score: Optional[Any] = None
+    f_score: Optional[Any] = None
+    m_score: Optional[Any] = None
+    rfm_segments: Optional[Any] = None
+    branch: Optional[List[str]] = None
+    city: Optional[List[str]] = None
+    state: Optional[List[str]] = None
+    birthday_start: Optional[date] = None
+    birthday_end: Optional[date] = None
+    anniversary_start: Optional[date] = None
+    anniversary_end: Optional[date] = None
+    purchase_type: Optional[str] = None
+    purchase_brand: Optional[Any] = None
+    section: Optional[Any] = None
+    product: Optional[Any] = None
+    model: Optional[Any] = None
+    item: Optional[Any] = None
+    value_threshold: Optional[float] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    # already shown on the UI
     rfm_segment_label: str
     brand_label: str
-    value_threshold: Optional[float] = None
     shortlisted_count: int
 class Config:
     from_attributes = True

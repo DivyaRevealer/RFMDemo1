@@ -1,3 +1,4 @@
+from decimal import Decimal
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -16,6 +17,11 @@ from schemas.campaign.campaign_schema import (
     CampaignOptions,
     CampaignRunDetails,
 )
+
+def _to_float(x):
+    if x is None: 
+        return None
+    return float(x) if isinstance(x, (int, float, Decimal)) else x
 
 def get_campaign_options(db: Session) -> CampaignOptions:
     # 1. RFM details
@@ -222,11 +228,51 @@ def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetail
 
 
     return CampaignRunDetails(
+        # id=camp.id,
+        # name=camp.name,
+        # rfm_segment_label=rfm_segment_label or "-",
+        # brand_label=brand_label or "-",
+        # value_threshold=float(camp.value_threshold) if camp.value_threshold is not None else None,
+        # shortlisted_count=shortlisted_count,
         id=camp.id,
         name=camp.name,
+
+        # new pass-through fields
+        start_date=camp.start_date,
+        end_date=camp.end_date,
+        recency_op=camp.recency_op,
+        recency_min=camp.recency_min,
+        recency_max=camp.recency_max,
+        frequency_op=camp.frequency_op,
+        frequency_min=camp.frequency_min,
+        frequency_max=camp.frequency_max,
+        monetary_op=camp.monetary_op,
+        monetary_min=_to_float(camp.monetary_min),
+        monetary_max=_to_float(camp.monetary_max),
+        r_score=camp.r_score,
+        f_score=camp.f_score,
+        m_score=camp.m_score,
+        rfm_segments=camp.rfm_segments,
+        branch=camp.branch,
+        city=camp.city,
+        state=camp.state,
+        birthday_start=camp.birthday_start,
+        birthday_end=camp.birthday_end,
+        anniversary_start=camp.anniversary_start,
+        anniversary_end=camp.anniversary_end,
+        purchase_type=camp.purchase_type,
+        purchase_brand=camp.purchase_brand,
+        section=camp.section,
+        product=camp.product,
+        model=camp.model,
+        item=camp.item,
+        value_threshold=_to_float(camp.value_threshold),
+        created_at=camp.created_at,
+        updated_at=camp.updated_at,
+
+        # already existing UI fields
         rfm_segment_label=rfm_segment_label or "-",
         brand_label=brand_label or "-",
-        value_threshold=float(camp.value_threshold) if camp.value_threshold is not None else None,
         shortlisted_count=shortlisted_count,
     )
 
