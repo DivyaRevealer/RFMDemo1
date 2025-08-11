@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from models.campaign.campaign_model import Campaign
 from models.campaign.brand_detail_model import  BrandDetail
@@ -8,7 +10,12 @@ from schemas.campaign.campaign_schema import CampaignCreate
 from models.crm_analysis2 import CRMAnalysis2 as CRMAnalysisModel
 from schemas.crm_analysis2 import CRMAnalysis2 as CRMAnalysisSchema
 #from schemas.campaign.campaign_schema import CampaignOptions
-from schemas.campaign.campaign_schema import CampaignCreate, CampaignOptions
+# from schemas.campaign.campaign_schema import CampaignCreate, CampaignOptions
+from schemas.campaign.campaign_schema import (
+    CampaignCreate,
+    CampaignOptions,
+    CampaignRunDetails,
+)
 
 def get_campaign_options(db: Session) -> CampaignOptions:
     # 1. RFM details
@@ -164,4 +171,62 @@ def update_campaign(db: Session, campaign_id: int, data: CampaignCreate):
     db.commit()
     db.refresh(campaign)
     return campaign
+
+def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetails | None:
+    """Return run-time details for a campaign."""
+    camp: Campaign = db.query(Campaign).get(campaign_id)
+    if not camp: 
+        raise HTTPException(404, "Campaign not found")
+
+    # Labels for the UI (not used in the count logic)
+    rfm_segment_label = None
+    if isinstance(camp.rfm_segments, list) and camp.rfm_segments:
+        rfm_segment_label = camp.rfm_segments[0]
+    elif isinstance(camp.rfm_segments, dict) and "label" in camp.rfm_segments:
+        rfm_segment_label = camp.rfm_segments["label"]
+
+    brand_label = None
+    if isinstance(camp.purchase_brand, list) and camp.purchase_brand:
+        brand_label = camp.purchase_brand[0]
+    elif isinstance(camp.purchase_brand, str):
+        brand_label = camp.purchase_brand
+
+    # Count distinct customers in crm_sales during the campaign window,
+    # optionally restricted by campaign.purchase_brand (JSON array)
+    sql_count = text("""
+        SELECT COUNT(DISTINCT s.CUST_MOBILENO) AS cnt
+        FROM crm_sales s
+        JOIN (
+          SELECT start_date, end_date, purchase_brand
+          FROM campaigns
+          WHERE id = :cid
+        ) c
+          ON s.INVOICE_DATE BETWEEN c.start_date AND c.end_date
+        WHERE
+          (c.purchase_brand IS NULL OR JSON_LENGTH(c.purchase_brand) = 0
+           OR JSON_CONTAINS(c.purchase_brand, JSON_QUOTE(s.BRAND)))
+          -- AND (s.TXN_FLAG IS NULL OR s.TXN_FLAG = 'S')  -- uncomment if you want sales-only
+    """)
+
+    row = db.execute(sql_count, {"cid": campaign_id}).first()
+    shortlisted_count = int(row.cnt) if row and row.cnt is not None else 0
+
+       # Debug print
+    print("Campaign Details →")
+    print(f"  id                = {camp.id}")
+    print(f"  name              = {camp.name}")
+    print(f"  rfm_segment_label = {rfm_segment_label or '-'}")
+    print(f"  brand_label       = {brand_label or '-'}")
+    print(f"  value_threshold   = {float(camp.value_threshold) if camp.value_threshold is not None else None}")
+    print(f"  shortlisted_count = {shortlisted_count}")
+
+
+    return CampaignRunDetails(
+        id=camp.id,
+        name=camp.name,
+        rfm_segment_label=rfm_segment_label or "-",
+        brand_label=brand_label or "-",
+        value_threshold=float(camp.value_threshold) if camp.value_threshold is not None else None,
+        shortlisted_count=shortlisted_count,
+    )
 
