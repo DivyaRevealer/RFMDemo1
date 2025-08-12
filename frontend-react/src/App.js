@@ -31,6 +31,18 @@ export default function App() {
           }
         />
 
+         {/* Protected Campaign Dashboard page */}
+        <Route
+          path="/campaign-dashboard"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <Campaign_Dashboard />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
         {/* Protected Create Campaign page */}
         <Route
           path="/create-campaign"
