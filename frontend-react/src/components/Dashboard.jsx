@@ -143,7 +143,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/filters');
+        const res = await axios.get('http://localhost:4001/filters');
         const data = res.data || [];
             const {
             phones: phoneList = [],
@@ -191,7 +191,7 @@ export default function Dashboard() {
   const [daysBucketData, setDaysBucketData] = useState([]);
   const [customerPercentData, setCustomerPercentData] = useState([]);
   // useEffect(() => {
-  //   fetch('http://localhost:8000/dashboard/')
+  //   fetch('http://localhost:4001/dashboard/')
   //     .then((res) => res.json())
   //     .then((rows) => computeMetrics(rows))
   //     .catch((err) => console.error('Failed to fetch dashboard data', err));
@@ -323,14 +323,14 @@ export default function Dashboard() {
      }
 
     try {
-      // const res = await axios.get('http://localhost:8000/dashboard/', { params });
+      // const res = await axios.get('http://localhost:4001/dashboard/', { params });
        const [res, chartsRes] = await Promise.all([
-        axios.get('http://localhost:8000/dashboard/', { params }),
-        axios.get('http://localhost:8000/dashboard/last_three_charts', { params }),
+        axios.get('http://localhost:4001/dashboard/', { params }),
+        axios.get('http://localhost:4001/dashboard/last_three_charts', { params }),
       ]);
       console.log("res------ ",res)
       computeMetrics(res.data);
-      // const chartsRes = await axios.get('http://localhost:8000/dashboard/last_three_charts', { params });
+      // const chartsRes = await axios.get('http://localhost:4001/dashboard/last_three_charts', { params });
       setSegmentData(chartsRes.data.segmentData || []);
       setDaysBucketData(chartsRes.data.daysBucketData || []);
       setCustomerPercentData(chartsRes.data.customerPercentData || []);

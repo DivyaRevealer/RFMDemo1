@@ -9,7 +9,7 @@ const SegmentChart = () => {
   const [segmentCounts, setSegmentCounts] = useState({});
 
   useEffect(() => {
-    axios.get("http://localhost:8000/rfm").then(res => {
+    axios.get("http://localhost:4001/rfm").then(res => {
       const counts = {};
       res.data.forEach(row => {
         counts[row.Segment] = (counts[row.Segment] || 0) + 1;

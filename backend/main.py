@@ -21,6 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 CampaignBase.metadata.create_all(bind=engine)

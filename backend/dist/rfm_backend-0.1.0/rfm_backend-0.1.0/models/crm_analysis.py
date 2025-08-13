@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric
 from database import Base
 
 
-class CRMAnalysis2(Base):
-    __tablename__ = "crm_analysis2"
+class CRMAnalysis(Base):
+    __tablename__ = "crm_analysis"
 
     CUST_MOBILENO       = Column('CUST_MOBILENO', String(60), primary_key=True)
     CUSTOMER_NAME       = Column('CUSTOMER_NAME', String(255), nullable=True)
