@@ -71,10 +71,12 @@ function Login() {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:4001/login', {
+      //const response = await axios.post('http://localhost:4001/login', {
+		 const response = await axios.post('/api/login', {
         username,
         password,
       });
+      
       localStorage.setItem('token', response.data.access_token);
       navigate('/dashboard');
     } catch (err) {

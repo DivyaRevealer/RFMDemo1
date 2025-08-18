@@ -28,11 +28,17 @@ Base.metadata.create_all(bind=engine)
 CampaignBase.metadata.create_all(bind=engine)
 
 # Include routes
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(filters.router)
-#app.include_router(campaign.router)
-app.include_router(campaign_router)
+# app.include_router(auth.router)
+# app.include_router(dashboard.router)
+# app.include_router(filters.router)
+# #app.include_router(campaign.router)
+# app.include_router(campaign_router)
+
+app.include_router(auth.router, prefix="/api")
+app.include_router(dashboard.router, prefix="/api")
+app.include_router(filters.router, prefix="/api")
+#app.include_router(campaign.router, prefix="/api")
+app.include_router(campaign_router, prefix="/api")
 
 @app.get("/")
 def root():

@@ -143,7 +143,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const res = await axios.get('http://localhost:4001/filters');
+        //const res = await axios.get('http://localhost:4001/filters');
+        const res = await axios.get('/api/filters');
         const data = res.data || [];
             const {
             phones: phoneList = [],
@@ -325,8 +326,10 @@ export default function Dashboard() {
     try {
       // const res = await axios.get('http://localhost:4001/dashboard/', { params });
        const [res, chartsRes] = await Promise.all([
-        axios.get('http://localhost:4001/dashboard/', { params }),
-        axios.get('http://localhost:4001/dashboard/last_three_charts', { params }),
+        //axios.get('http://localhost:4001/dashboard/', { params }),
+        //axios.get('http://localhost:4001/dashboard/last_three_charts', { params }),
+        axios.get('/api/dashboard/', { params }),
+        axios.get('/api/dashboard/last_three_charts', { params }),
       ]);
       console.log("res------ ",res)
       computeMetrics(res.data);

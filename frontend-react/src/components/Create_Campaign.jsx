@@ -57,7 +57,8 @@ const { brands, sections, products, models, items, brand_hierarchy, r_scores, f_
 
   // ---------- load options ----------
   useEffect(() => {
-    axios.get('http://localhost:4001/campaign/options')
+    //axios.get('http://localhost:4001/campaign/options')
+    axios.get('/api/campaign/options')
       .then(res => {
         setOptions(res.data);
         setOptionsLoaded(true); // ✅ ready

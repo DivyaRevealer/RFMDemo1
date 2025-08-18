@@ -8,7 +8,8 @@ const RFMTable = () => {
   const [loading, setLoading] = useState(false);
 
   const loadRFM = async () => {
-    const res = await axios.get("http://localhost:8000/rfm");
+    //const res = await axios.get("http://localhost:8000/rfm");
+    const res = await axios.get("/api/rfm");
     setData(res.data);
   };
 
@@ -20,7 +21,8 @@ const RFMTable = () => {
 
   const sendCampaign = async (seg) => {
     setLoading(true);
-    const res = await fetch(`http://localhost:8000/campaign/${seg}`, {
+    //const res = await fetch(`http://localhost:8000/campaign/${seg}`, {
+    const res = await fetch(`/api/campaign/${seg}`, {
       method: "POST"
     });
     const result = await res.json();
@@ -40,7 +42,7 @@ const RFMTable = () => {
         <option>Lost</option>
       </select>
 
-      <button onClick={() => window.open("http://localhost:8000/export", "_blank")}>
+      <button onClick={() => window.open("/api/export", "_blank")}>
         Export to Excel
       </button>
 

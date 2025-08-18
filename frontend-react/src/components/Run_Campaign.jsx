@@ -25,7 +25,8 @@ const RunCampaign = () => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:4001/campaign")
+    //fetch("http://localhost:4001/campaign")
+    fetch("/api/campaign")
       .then((res) => res.json())
       .then(setCampaigns)
       .catch((err) => console.error("Failed to load campaigns", err));
@@ -33,7 +34,8 @@ const RunCampaign = () => {
 
   const handleSelect = (id) => {
     setSelectedCampaign(id);
-    fetch(`http://localhost:4001/campaign/run/${id}`)
+    //fetch(`http://localhost:4001/campaign/run/${id}`)
+    fetch(`/api/campaign/run/${id}`)
       .then((res) => res.json())
       // .then((data) => {
       //   setCampaignDetails({
