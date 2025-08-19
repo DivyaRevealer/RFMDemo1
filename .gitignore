@@ -47,6 +47,8 @@ extra/
 # tmpfolder
 src/assets/tmp
 
+src/backend/.env
+
 echo "README.zip" >> .gitignore
 echo "build_backend.zip" >> .gitignore"README.zip" 
 "build_BE.zip" 

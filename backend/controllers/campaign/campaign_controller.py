@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from models.campaign.campaign_model import Campaign
+from models.campaign.upload_contact_model import CampaignUpload
 from models.campaign.brand_detail_model import  BrandDetail
 from models.campaign.brand_filter_model import CampaignBrandFilter
 from models.campaign.geography_model import Geography
@@ -178,6 +179,23 @@ def update_campaign(db: Session, campaign_id: int, data: CampaignCreate):
     db.refresh(campaign)
     return campaign
 
+
+def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
+    objs = [
+        CampaignUpload(
+            campaign_id=campaign_id,
+            name=contact.get("name"),
+            mobile_no=str(contact.get("mobile_no")),
+            email_id=contact.get("email_id"),
+        )
+        for contact in contacts
+        if contact.get("mobile_no") is not None
+    ]
+    if objs:
+        db.bulk_save_objects(objs)
+        db.commit()
+
+
 def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetails | None:
     """Return run-time details for a campaign."""
     camp: Campaign = db.query(Campaign).get(campaign_id)
@@ -240,6 +258,7 @@ def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetail
         # new pass-through fields
         start_date=camp.start_date,
         end_date=camp.end_date,
+        based_on=camp.based_on,
         recency_op=camp.recency_op,
         recency_min=camp.recency_min,
         recency_max=camp.recency_max,

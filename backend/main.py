@@ -7,9 +7,12 @@ from controllers import auth, dashboard, filters, campaign
 from fastapi.middleware.cors import CORSMiddleware
 from routers.campaign.campaign_router import router as campaign_router
 from models.campaign.campaign_model import Base as CampaignBase
+from dotenv import load_dotenv
 
-print("PYTHON EXECUTABLE:", sys.executable)
-print("sys.path:", sys.path)
+load_dotenv()
+# print(">>> FastAPI is starting <<<", flush=True)
+# print("PYTHON EXECUTABLE:", sys.executable)
+# print("sys.path:", sys.path)
 
 app = FastAPI()
 

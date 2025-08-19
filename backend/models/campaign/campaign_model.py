@@ -8,27 +8,28 @@ class Campaign(Base):
     name             = Column(String(255), nullable=False)
     start_date       = Column(Date,   nullable=False)
     end_date         = Column(Date,   nullable=False)
-
-    recency_op       = Column(JSON,   nullable=False)
+    based_on         = Column(String(100), nullable=False)
+    recency_op       = Column(JSON)
     recency_min      = Column(Integer)
     recency_max      = Column(Integer)
 
-    frequency_op     = Column(JSON,   nullable=False)
+    frequency_op     = Column(JSON)
     frequency_min    = Column(Integer)
     frequency_max    = Column(Integer)
 
-    monetary_op      = Column(JSON,   nullable=False)
+    monetary_op      = Column(JSON)
     monetary_min     = Column(DECIMAL(18,2))
     monetary_max     = Column(DECIMAL(18,2))
 
     r_score          = Column(JSON)
     f_score          = Column(JSON)
     m_score          = Column(JSON)
-    rfm_segments     = Column(JSON,   nullable=False)
+    rfm_segments     = Column(JSON)
 
     branch           = Column(JSON)
     city             = Column(JSON)
     state            = Column(JSON)
+    
 
     # birthday_date    = Column(Date)
     # anniversary_date = Column(Date)

@@ -9,3 +9,4 @@ pymysql
 passlib
 python-jose[cryptography]
 bcrypt
+python-dotenv

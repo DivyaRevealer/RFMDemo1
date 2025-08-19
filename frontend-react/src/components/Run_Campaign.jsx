@@ -20,6 +20,9 @@ const RunCampaign = () => {
 
   const [offerText, setOfferText] = useState("");
   const [channels, setChannels] = useState([]);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [smsNumber, setSmsNumber] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [status, setStatus] = useState("idle"); // idle | ready | sending | done | error
   const [progress, setProgress] = useState(0);
@@ -68,6 +71,7 @@ const RunCampaign = () => {
     setShowNext(false);
     setOfferText("");
     setChannels([]);
+    setWhatsappNumber("");
     setPromoCode("");
     setStatus("idle");
     setProgress(0);
@@ -83,7 +87,12 @@ const RunCampaign = () => {
 
   async function startBroadcast() {
     if (!selectedCampaign) return; // <-- fixed
-    if (!offerText.trim() || channels.length === 0) {
+    // if (!offerText.trim() || channels.length === 0) {
+    if (
+      !offerText.trim() ||
+      channels.length === 0 ||
+      (channels.includes("WhatsApp") && !whatsappNumber.trim())
+    ) {
       setStatus("error");
       return;
     }
@@ -92,6 +101,14 @@ const RunCampaign = () => {
 
     try {
       // await api.post(`/campaign/run/${selectedCampaign}/start`, { offerText, channels, promoCode });
+        // Send WhatsApp message through backend if selected
+      if (channels.includes("WhatsApp")) {
+        await fetch("/api/campaign/send-whatsapp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: whatsappNumber, body: offerText }),
+        });
+      }
       const timer = setInterval(() => {
         setProgress((p) => {
           if (p >= 100) {
@@ -368,11 +385,57 @@ const RunCampaign = () => {
                   />
 
                   <Title level={5} style={{ marginTop: 20, marginBottom: 12 }}>Choose Broadcasting Mode</Title>
-                  <Checkbox.Group
-                    options={["WhatsApp", "SMS", "Email"]}
-                    value={channels}
-                    onChange={setChannels}
-                  />
+                  <Checkbox.Group value={channels} onChange={setChannels}>
+                    <Space direction="vertical" size={8} style={{ width: "100%", }}>
+                      {/* WhatsApp row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px"}}>
+                        <Checkbox value="WhatsApp">WhatsApp</Checkbox>
+                        </div>
+                        {channels.includes("WhatsApp") && (
+                          <Input
+                            placeholder="Enter WhatsApp number"
+                            value={whatsappNumber}
+                            onChange={(e) => setWhatsappNumber(e.target.value)}
+                            style={{ maxWidth: 280 }}
+                            size="middle"
+                          />
+                        )}
+                      </div>
+
+                      {/* SMS row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px" }}>
+                          <Checkbox value="SMS">SMS</Checkbox>
+                        </div>
+                        {channels.includes("SMS") && (
+                          <Input
+                            placeholder="Enter SMS number"
+                            value={smsNumber}
+                            onChange={(e) => setSmsNumber(e.target.value)}
+                            style={{ maxWidth: 280 }}
+                            size="middle"
+                          />
+                        )}
+                      </div>
+
+                      {/* Email row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px" }}>
+                        <Checkbox value="Email">Email</Checkbox>
+                        </div>
+                        {channels.includes("Email") && (
+                          <Input
+                            placeholder="Enter email address"
+                            value={emailAddress}
+                            onChange={(e) => setEmailAddress(e.target.value)}
+                            style={{ maxWidth: 320 }}
+                            size="middle"
+                          />
+                        )}
+                      </div>
+                    </Space>
+                  </Checkbox.Group>
 
                   <Title level={5} style={{ marginTop: 20, marginBottom: 8 }}>Promo Code</Title>
                   <Space>
@@ -388,7 +451,12 @@ const RunCampaign = () => {
 
                   <div style={{ marginTop: 16 }}>
                     {status === "error" && (
-                      <Alert type="error" showIcon message="Enter offer text and select at least one channel." />
+                      // <Alert type="error" showIcon message="Enter offer text and select at least one channel." />
+                      <Alert
+                        type="error"
+                        showIcon
+                        message="Enter offer text, select channels, and provide WhatsApp number if applicable."
+                      />
                     )}
                     {status === "sending" && (
                       <>

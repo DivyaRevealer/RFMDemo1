@@ -6,13 +6,14 @@ class CampaignBase(BaseModel):
     name:             str
     start_date:       date
     end_date:         date
-    recency_op:       str
+    based_on:         Optional[str]= None
+    recency_op:       Optional[str]= None
     recency_min:      Optional[int]= None
     recency_max:      Optional[int]= None
-    frequency_op:     str
+    frequency_op:     Optional[str]= None
     frequency_min:    Optional[int]= None
     frequency_max:    Optional[int]= None
-    monetary_op:      str
+    monetary_op:      Optional[str]= None
     monetary_min:     Optional[float]= None
     monetary_max:     Optional[float]= None
     r_score:          Optional[List[int]]= None
@@ -26,7 +27,7 @@ class CampaignBase(BaseModel):
     birthday_end:       Optional[date]= None
     anniversary_start:  Optional[date]= None
     anniversary_end:    Optional[date]= None
-    purchase_type: Optional[str] 
+    purchase_type: Optional[str] = None
     purchase_brand:  Optional[List[str]]= None
     section:          Optional[List[str]]= None
     product:          Optional[List[str]]= None
@@ -77,7 +78,7 @@ class CampaignRunDetails(BaseModel):
  
     id: int
     name: str
-
+    based_on: str | None = None
     # NEW: raw campaign filters/metadata
     start_date: date
     end_date: date

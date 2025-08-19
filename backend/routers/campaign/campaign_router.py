@@ -1,7 +1,10 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+import os
 # from controllers.campaign.campaign_controller import create_campaign
 from models import crm_analysis
 from models.campaign.campaign_model import Campaign
@@ -12,6 +15,7 @@ from controllers.campaign.campaign_controller import (
     get_campaign,
     update_campaign,
     get_campaign_run_details,
+    save_upload_contacts,
 )
 from schemas.campaign.campaign_schema import (
     CampaignCreate,
@@ -22,6 +26,8 @@ from schemas.campaign.campaign_schema import (
     )
 from database import SessionLocal
 from typing import List, Optional
+from utils.whatsapp import send_whatsapp_message
+import pandas as pd
 
 router = APIRouter(prefix="/campaign", tags=["campaign"])
 
@@ -79,6 +85,20 @@ def update_campaign_route(
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign not found")
     return updated
+
+@router.post("/{campaign_id}/upload")
+def upload_campaign_contacts(
+    campaign_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        df = pd.read_excel(file.file)
+        contacts = df.to_dict(orient="records")
+        save_upload_contacts(db, campaign_id, contacts)
+        return {"rows": len(contacts)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/run/list", response_model=List[CampaignListOut])
 def list_campaigns_for_run(
@@ -149,8 +169,37 @@ def campaign_run_details(campaign_id: int, db: Session = Depends(get_db)):
     return CampaignRunDetails(
         id=camp.id,
         name=camp.name,
+        based_on=camp.based_on,
         rfm_segment_label=rfm_segment_label or "-",
         brand_label=brand_label or "-",
         value_threshold=float(camp.value_threshold) if camp.value_threshold is not None else None,
         shortlisted_count=shortlisted_count,
     )
+
+class WhatsAppMessage(BaseModel):
+    to: str
+    body: str
+
+@router.post("/send-whatsapp")
+def send_whatsapp(req: WhatsAppMessage):
+    channel_number = os.getenv("WBOX_CHANNEL_NUMBER")
+    api_key = os.getenv("WBOX_TOKEN")
+
+    print("watsapp Details →")
+   
+
+    if not channel_number or not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="WBOX_CHANNEL_NUMBER or WBOX_TOKEN not set in environment"
+        )
+
+    try:
+        return send_whatsapp_message(
+            channel_number=channel_number,
+            api_key=api_key,
+            recipient_number=req.to,
+            message=req.body
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))

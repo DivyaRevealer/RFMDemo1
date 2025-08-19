@@ -42,8 +42,8 @@ export default function Create_Campaign() {
   const [optionsLoaded, setOptionsLoaded] = useState(false);
   
   const [uploadFile, setUploadFile] = useState(null);
+  const watchMode = Form.useWatch('rfmMode', form) || 'customized';
   
-  const watchBasedOn = Form.useWatch('basedOn', form) || 'Customer Base';
   const { brands, sections, products, models, items, brand_hierarchy, r_scores, f_scores, m_scores, rfm_segments, branches, branch_city_map, branch_state_map } = options;
 
   // ---------- helpers ----------
@@ -150,8 +150,8 @@ export default function Create_Campaign() {
       // r_score:      values.rScore,
       // f_score:      values.fScore,
       // m_score:      values.mScore,
-     // rfm_segments: values.rfmSegment,
-      based_on:   values.basedOn,
+      rfm_segments: values.rfmSegment,
+
       // branch: values.branch,
       // city:   values.city,
       // state:  values.state,
@@ -172,9 +172,8 @@ export default function Create_Campaign() {
     };
 
 
-    if (values.basedOn !== 'upload') {
+    if (watchMode !== 'upload') {
       Object.assign(payload, {
-        based_on:   values.basedOn,
         recency_op:  values.recencyOp,
         recency_min: values.recencyMin,
         ...(values.recencyOp === 'between'
@@ -224,21 +223,21 @@ export default function Create_Campaign() {
       });
     }
 
-    // if (values.rfmMode === 'upload') {
-    //   payload.rfm_segments = [];
-    //   payload.branch = [];
-    //   payload.city = [];
-    //   payload.state = [];
-    //   payload.birthday_start = undefined;
-    //   payload.birthday_end = undefined;
-    //   payload.anniversary_start = undefined;
-    //   payload.anniversary_end = undefined;
-    //   payload.purchase_brand = [];
-    //   payload.section = [];
-    //   payload.product = [];
-    //   payload.model = [];
-    //   payload.item = [];
-    // }
+    if (values.rfmMode === 'upload') {
+      payload.rfm_segments = [];
+      payload.branch = [];
+      payload.city = [];
+      payload.state = [];
+      payload.birthday_start = undefined;
+      payload.birthday_end = undefined;
+      payload.anniversary_start = undefined;
+      payload.anniversary_end = undefined;
+      payload.purchase_brand = [];
+      payload.section = [];
+      payload.product = [];
+      payload.model = [];
+      payload.item = [];
+    }
 
     try {
       let resp;
@@ -252,7 +251,7 @@ export default function Create_Campaign() {
         message.success('Campaign saved successfully');
       }
       const newId = campaignId || resp?.data?.id;
-      if (values.basedOn === 'upload' && uploadFile && newId) {
+      if (watchMode === 'upload' && uploadFile && newId) {
         const formData = new FormData();
         formData.append('file', uploadFile);
         await api.post(`/campaign/${newId}/upload`, formData, {
@@ -453,18 +452,6 @@ export default function Create_Campaign() {
           </Row>
         </Card>
 
-        <Card title="Campaign Based On" style={{ marginTop: 5 }}>
-          <Form.Item name="basedOn" initialValue="Customer Base" style={{ marginBottom: 0 }}>
-            <Radio.Group>
-              <Radio value="Customer Base">Customer Base</Radio>
-              <Radio value="upload">Upload</Radio>
-            </Radio.Group>
-          </Form.Item>
-        </Card>
-
-        {watchBasedOn === 'Customer Base' && (
-          <>
-
         {/* Geography */}
         <Card title="Geography" style={{ marginTop: 5 }}>
           <Row gutter={16}>
@@ -476,7 +463,7 @@ export default function Create_Campaign() {
                     label="Branch"
                     placeholder="Select branches"
                     optionsProvider={() => computeGeoOptions().allowedBranches}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchMode === 'upload'}
                   />
                 )}
               </Form.Item>
@@ -489,7 +476,7 @@ export default function Create_Campaign() {
                     label="City"
                     placeholder="Select cities"
                     optionsProvider={() => computeGeoOptions().allowedCities}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchMode === 'upload'}
                   />
                 )}
               </Form.Item>
@@ -502,7 +489,7 @@ export default function Create_Campaign() {
                     label="State"
                     placeholder="Select states"
                     optionsProvider={() => computeGeoOptions().allowedStates}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchMode === 'upload'}
                   />
                 )}
               </Form.Item>
@@ -518,7 +505,7 @@ export default function Create_Campaign() {
                 <Radio.Group>
                   <Radio value="customized">RFM Customized</Radio>
                   <Radio value="segmented">RFM Segmented</Radio>
-                  
+                  <Radio value="upload">Upload</Radio>
                 </Radio.Group>
               </Form.Item>
             </Col>
@@ -534,7 +521,7 @@ export default function Create_Campaign() {
                       <Row gutter={16}>
                         {/* Recency */}
                         <Col span={8}>
-                          <Form.Item name="recencyOp" label="Recency Operator" >
+                          <Form.Item name="recencyOp" label="Recency Operator" rules={[{ required: true }]}>
                             <Select placeholder="Operator">
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
@@ -546,7 +533,7 @@ export default function Create_Campaign() {
                             {({ getFieldValue }) => {
                               const op = getFieldValue('recencyOp');
                               return (
-                                <Form.Item label="Recency (Days)" style={{ marginBottom: 0 }} >
+                                <Form.Item label="Recency (Days)" style={{ marginBottom: 0 }} rules={[{ required: true }]}>
                                   {op === 'between' ? (
                                     <div style={{ display: 'flex', gap: 8 }}>
                                       <Form.Item name="recencyMin" noStyle>
@@ -569,7 +556,7 @@ export default function Create_Campaign() {
 
                         {/* Frequency */}
                         <Col span={8}>
-                          <Form.Item name="frequencyOp" label="Frequency Operator" >
+                          <Form.Item name="frequencyOp" label="Frequency Operator" rules={[{ required: true }]}>
                             <Select placeholder="Operator">
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
@@ -581,7 +568,7 @@ export default function Create_Campaign() {
                             {({ getFieldValue }) => {
                               const op = getFieldValue('frequencyOp');
                               return (
-                                <Form.Item label="Frequency" style={{ marginBottom: 0 }} >
+                                <Form.Item label="Frequency" style={{ marginBottom: 0 }} rules={[{ required: true }]}>
                                   {op === 'between' ? (
                                     <div style={{ display: 'flex', gap: 8 }}>
                                       <Form.Item name="frequencyMin" noStyle>
@@ -604,7 +591,7 @@ export default function Create_Campaign() {
 
                         {/* Monetary */}
                         <Col span={8}>
-                          <Form.Item name="monetaryOp" label="Monetary Operator" >
+                          <Form.Item name="monetaryOp" label="Monetary Operator" rules={[{ required: true }]}>
                             <Select placeholder="Operator">
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
@@ -616,7 +603,7 @@ export default function Create_Campaign() {
                             {({ getFieldValue }) => {
                               const op = getFieldValue('monetaryOp');
                               return (
-                                <Form.Item label="Monetary (₹)" style={{ marginBottom: 0 }} >
+                                <Form.Item label="Monetary (₹)" style={{ marginBottom: 0 }} rules={[{ required: true }]}>
                                   {op === 'between' ? (
                                     <div style={{ display: 'flex', gap: 8 }}>
                                       <Form.Item name="monetaryMin" noStyle>
@@ -685,7 +672,13 @@ export default function Create_Campaign() {
                       </Form.Item>
                     </Card>
                   )}
-                  
+                  {mode === 'upload' && (
+                    <Card title="Upload" style={{ marginTop: 5 }}>
+                      <Form.Item label="Upload File">
+                        <input type="file" accept=".csv,.xlsx" onChange={e => setUploadFile(e.target.files[0])} />
+                      </Form.Item>
+                    </Card>
+                  )}
                 </>
               );
             }}
@@ -693,154 +686,130 @@ export default function Create_Campaign() {
         </Card>
 
         {/* Product */}
-        <Card title="Product" style={{ marginTop: 5 }}>
-          {/* <Form.Item
-            name="purchaseType"
-            label="Purchase Type"
-            rules={[{ required: true, message: 'Select purchase type' }]}
-          >
-          
-            <Radio.Group disabled={watchMode === 'upload'}>
-              <Radio value="any">Any Purchase</Radio>
-              <Radio value="recent">Recent Purchase</Radio>
-            </Radio.Group>
-          </Form.Item> */}
-          <Form.Item
-              noStyle
-              shouldUpdate={(prev, cur) => prev.rfmMode !== cur.rfmMode}
-            >
-              {({ getFieldValue }) => {
-                const mode = getFieldValue('rfmMode');
-                return (
-                  <Form.Item
-                    name="purchaseType"
-                    label="Purchase Type"
-                    rules={
-                      watchBasedOn !== 'upload'
-                        ? [{ required: true, message: 'Select purchase type' }]
-                        : []
-                    }
-                  >
-                    <Radio.Group disabled={watchBasedOn  === 'upload'}>
-                      <Radio value="any">Any Purchase</Radio>
-                      <Radio value="recent">Recent Purchase</Radio>
-                    </Radio.Group>
-                  </Form.Item>
-                );
-              }}
-            </Form.Item>
+<Card title="Product" style={{ marginTop: 5 }}>
+  <Form.Item
+    name="purchaseType"
+    label="Purchase Type"
+    rules={[{ required: true, message: 'Select purchase type' }]}
+  >
+    {/* <Radio.Group> */}
+    <Radio.Group disabled={watchMode === 'upload'}>
+      <Radio value="any">Any Purchase</Radio>
+      <Radio value="recent">Recent Purchase</Radio>
+    </Radio.Group>
+  </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item noStyle shouldUpdate={(prev, cur) =>
-                prev.section !== cur.section ||
-                prev.product !== cur.product ||
-                prev.model   !== cur.model   ||
-                prev.item    !== cur.item
-              }>
-                {() => (
-                  <MultiSelectDropdown
-                    name="purchaseBrand"
-                    label="Brand"
-                    placeholder="Select brands"
-                    optionsProvider={() => computeBrandOptions().allowedBrands}
-                    disabled={watchBasedOn  === 'upload'}
-                  />
-                )}
-              </Form.Item>
-            </Col>
+  <Row gutter={16}>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.section !== cur.section ||
+        prev.product !== cur.product ||
+        prev.model   !== cur.model   ||
+        prev.item    !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="purchaseBrand"
+            label="Brand"
+            placeholder="Select brands"
+            optionsProvider={() => computeBrandOptions().allowedBrands}
+            disabled={watchMode === 'upload'}
+          />
+        )}
+      </Form.Item>
+    </Col>
 
-            <Col span={8}>
-              <Form.Item noStyle shouldUpdate={(prev, cur) =>
-                prev.purchaseBrand !== cur.purchaseBrand ||
-                prev.product       !== cur.product       ||
-                prev.model         !== cur.model         ||
-                prev.item          !== cur.item
-              }>
-                {() => (
-                  <MultiSelectDropdown
-                    name="section"
-                    label="Section"
-                    placeholder="Select sections"
-                    optionsProvider={() => computeBrandOptions().allowedSections}
-                    disabled={watchBasedOn  === 'upload'}
-                  />
-                )}
-              </Form.Item>
-            </Col>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.product       !== cur.product       ||
+        prev.model         !== cur.model         ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="section"
+            label="Section"
+            placeholder="Select sections"
+            optionsProvider={() => computeBrandOptions().allowedSections}
+            disabled={watchMode === 'upload'}
+          />
+        )}
+      </Form.Item>
+    </Col>
 
-            <Col span={8}>
-              <Form.Item noStyle shouldUpdate={(prev, cur) =>
-                prev.purchaseBrand !== cur.purchaseBrand ||
-                prev.section       !== cur.section       ||
-                prev.model         !== cur.model         ||
-                prev.item          !== cur.item
-              }>
-                {() => (
-                  <MultiSelectDropdown
-                    name="product"
-                    label="Product"
-                    placeholder="Select products"
-                    optionsProvider={() => computeBrandOptions().allowedProducts}
-                    disabled={watchBasedOn  === 'upload'}
-                  />
-                )}
-              </Form.Item>
-            </Col>
-          </Row>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.model         !== cur.model         ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="product"
+            label="Product"
+            placeholder="Select products"
+            optionsProvider={() => computeBrandOptions().allowedProducts}
+            disabled={watchMode === 'upload'}
+          />
+        )}
+      </Form.Item>
+    </Col>
+  </Row>
 
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col span={8}>
-              <Form.Item noStyle shouldUpdate={(prev, cur) =>
-                prev.purchaseBrand !== cur.purchaseBrand ||
-                prev.section       !== cur.section       ||
-                prev.product       !== cur.product       ||
-                prev.item          !== cur.item
-              }>
-                {() => (
-                  <MultiSelectDropdown
-                    name="model"
-                    label="Model"
-                    placeholder="Select models"
-                    optionsProvider={() => computeBrandOptions().allowedModels}
-                    disabled={watchBasedOn  === 'upload'}
-                  />
-                )}
-              </Form.Item>
-            </Col>
+  <Row gutter={16} style={{ marginTop: 16 }}>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.product       !== cur.product       ||
+        prev.item          !== cur.item
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="model"
+            label="Model"
+            placeholder="Select models"
+            optionsProvider={() => computeBrandOptions().allowedModels}
+            disabled={watchMode === 'upload'}
+          />
+        )}
+      </Form.Item>
+    </Col>
 
-            <Col span={8}>
-              <Form.Item noStyle shouldUpdate={(prev, cur) =>
-                prev.purchaseBrand !== cur.purchaseBrand ||
-                prev.section       !== cur.section       ||
-                prev.product       !== cur.product       ||
-                prev.model         !== cur.model
-              }>
-                {() => (
-                  <MultiSelectDropdown
-                    name="item"
-                    label="Item"
-                    placeholder="Select items"
-                    optionsProvider={() => computeBrandOptions().allowedItems}
-                    disabled={watchBasedOn  === 'upload'}
-                  />
-                )}
-              </Form.Item>
-            </Col>
+    <Col span={8}>
+      <Form.Item noStyle shouldUpdate={(prev, cur) =>
+        prev.purchaseBrand !== cur.purchaseBrand ||
+        prev.section       !== cur.section       ||
+        prev.product       !== cur.product       ||
+        prev.model         !== cur.model
+      }>
+        {() => (
+          <MultiSelectDropdown
+            name="item"
+            label="Item"
+            placeholder="Select items"
+            optionsProvider={() => computeBrandOptions().allowedItems}
+            disabled={watchMode === 'upload'}
+          />
+        )}
+      </Form.Item>
+    </Col>
 
-            <Col span={8}>
-              <Form.Item name="valueThreshold" label="Value Threshold">
-                <InputNumber
-                  style={{ width: '100%' }}
-                  formatter={value => `₹ ${value}`}
-                  min={0}
-                  placeholder="e.g. ≥ 50000"
-                  disabled={watchBasedOn  === 'upload'}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
+    <Col span={8}>
+      <Form.Item name="valueThreshold" label="Value Threshold">
+        <InputNumber
+          style={{ width: '100%' }}
+          formatter={value => `₹ ${value}`}
+          min={0}
+          placeholder="e.g. ≥ 50000"
+          disabled={watchMode === 'upload'}
+        />
+      </Form.Item>
+    </Col>
+  </Row>
+</Card>
 
         {/* Occasions */}
         <Card title="Occasions" style={{ marginTop: 5 }} bodyStyle={{ padding: 12 }}>
@@ -848,31 +817,17 @@ export default function Create_Campaign() {
             <Col span={12}>
               <Form.Item name="birthdayRange" label="Birthday Range" style={{ marginBottom: 8 }}>
                 {/* <RangePicker style={{ width: '100%' }} /> */}
-                 <RangePicker style={{ width: '100%' }} disabled={watchBasedOn  === 'upload'} />
+                 <RangePicker style={{ width: '100%' }} disabled={watchMode === 'upload'} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="anniversaryRange" label="Anniversary Range" style={{ marginBottom: 0 }}>
                 {/* <RangePicker style={{ width: '100%' }} /> */}
-                 <RangePicker style={{ width: '100%' }} disabled={watchBasedOn  === 'upload'} />
+                 <RangePicker style={{ width: '100%' }} disabled={watchMode === 'upload'} />
               </Form.Item>
             </Col>
           </Row>
         </Card>
-        </>)}
-
-        {watchBasedOn === 'upload' && (
-          <Card title="Upload Contacts" style={{ marginTop: 5 }}>
-            <Upload
-              beforeUpload={(file) => {
-                setUploadFile(file);
-                return false;
-              }}
-            >
-              <Button icon={<UploadOutlined />}>Select File</Button>
-            </Upload>
-          </Card>
-        )}
 
         <Form.Item style={{ textAlign: 'center', marginTop: 5 }}>
           <Button type="primary" htmlType="submit" size="large">
