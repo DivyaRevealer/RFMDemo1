@@ -83,7 +83,7 @@ export default function Create_Campaign() {
     form.setFieldsValue({
       name: data.name,
       campaignPeriod: toRange(data.start_date, data.end_date),
-
+      basedOn: data.based_on,
       recencyOp: data.recency_op,
       recencyMin: data.recency_min,
       recencyMax: data.recency_max,
@@ -117,6 +117,7 @@ export default function Create_Campaign() {
 
       valueThreshold: data.value_threshold,
     });
+    //alert(data.based_on)
   }).catch(() => message.error('Failed to load campaign'));
 }, [campaignId, form /*, optionsLoaded*/]);
 
@@ -476,7 +477,7 @@ export default function Create_Campaign() {
                     label="Branch"
                     placeholder="Select branches"
                     optionsProvider={() => computeGeoOptions().allowedBranches}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchBasedOn  === 'upload'}
                   />
                 )}
               </Form.Item>
@@ -489,7 +490,7 @@ export default function Create_Campaign() {
                     label="City"
                     placeholder="Select cities"
                     optionsProvider={() => computeGeoOptions().allowedCities}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchBasedOn  === 'upload'}
                   />
                 )}
               </Form.Item>
@@ -502,7 +503,7 @@ export default function Create_Campaign() {
                     label="State"
                     placeholder="Select states"
                     optionsProvider={() => computeGeoOptions().allowedStates}
-                    disabled={watchBasedOn  === 'Upload'}
+                    disabled={watchBasedOn  === 'upload'}
                   />
                 )}
               </Form.Item>

@@ -205,7 +205,6 @@ def send_whatsapp_message(channel_number: str, api_key: str, recipient_number: s
 
     url = "https://cloudapi.wbbox.in/api/v1.0/messages/send-template/917996666220"
     clean_recipient = re.sub(r"\D", "", str(recipient_number))
-    clean_recipient = str(recipient_number).strip()
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -233,7 +232,7 @@ def send_whatsapp_message(channel_number: str, api_key: str, recipient_number: s
                     "parameters": [
                         {
                             "type": "text",
-                            "text": "Suresh"
+                            "text": "Divya"
                         }
                     ]
                 }
