@@ -14,7 +14,11 @@ export default function Layout({ children }) {
 
   return (
     <div className={`layout ${collapsed ? 'collapsed' : ''}`}>
-      <aside className="sidebar">
+      <aside className="sidebar"  style={{
+    //background: "linear-gradient(180deg, #00c6ff 0%, #0072ff 100%)",
+    background: "linear-gradient(180deg, #00E0D3 0%, #00B4DB 100%)",
+    color: "#fff",
+  }}>
         {/* collapse/expand button */}
         <button
           className="toggle-btn"

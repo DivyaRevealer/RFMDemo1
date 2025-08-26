@@ -15,7 +15,11 @@ export default function Layout({ children }) {
 
   return (
     <div className={`layout ${collapsed ? 'collapsed' : ''}`}>
-      <aside className="sidebar">
+      <aside className="sidebar"  style={{
+    //background: "linear-gradient(180deg, #00c6ff 0%, #0072ff 100%)",
+    background: "linear-gradient(180deg, #00E0D3 0%, #00B4DB 100%)",
+    color: "#fff",
+  }}>
         {/* Top group: toggle + nav links */}
         <div className="sidebar-top">
           <button className="icon-btn toggle-btn" onClick={toggleSidebar} title={collapsed ? 'Expand' : 'Collapse'}>
@@ -52,7 +56,11 @@ export default function Layout({ children }) {
       </aside>
 
       <div className="main">
-        <header className="header">
+        <header className="header" style={{
+        //background: "linear-gradient(180deg, #00c6ff 0%, #0072ff 100%)",
+          background: "#474949ff",
+          color: "#fff"
+        }}>
           RFM Analysis
         </header>
         <div className="content">

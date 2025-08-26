@@ -2,11 +2,15 @@ import { message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 //import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio } from 'antd';
-import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload } from 'antd';
+import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload, Space ,Divider } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
+
+import { DownloadOutlined } from "@ant-design/icons";
+
+const { Text, Link } = Typography;
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select; // ✅ needed for <Option> usage
@@ -44,6 +48,7 @@ export default function Create_Campaign() {
   const [uploadFile, setUploadFile] = useState(null);
   
   const watchBasedOn = Form.useWatch('basedOn', form) || 'Customer Base';
+  const watchName = Form.useWatch('name', form) || '';
   const { brands, sections, products, models, items, brand_hierarchy, r_scores, f_scores, m_scores, rfm_segments, branches, branch_city_map, branch_state_map } = options;
 
   // ---------- helpers ----------
@@ -864,14 +869,40 @@ export default function Create_Campaign() {
 
         {watchBasedOn === 'upload' && (
           <Card title="Upload Contacts" style={{ marginTop: 5 }}>
-            <Upload
-              beforeUpload={(file) => {
-                setUploadFile(file);
-                return false;
-              }}
-            >
-              <Button icon={<UploadOutlined />}>Select File</Button>
-            </Upload>
+           
+            <Space direction="vertical" style={{ width: "100%" }}>
+              <div>
+                <Link href="/api/campaign/upload/template">Download Template</Link>
+                {isEditing && (
+                  <>
+                    <Divider type="vertical" />
+                    <Text strong style={{ marginRight: 8, color: "#555" }}>
+                      Do you want to download the uploaded file?
+                    </Text>
+                    <Button
+                      type="link"
+                      icon={<DownloadOutlined />}
+                      href={`/api/campaign/${campaignId}/upload/download`}
+                      download={`${watchName}.xlsx`}
+                      style={{ color: "#1890ff", fontWeight: 500 }}
+                    >
+                      {watchName}.xlsx
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <Upload
+                beforeUpload={(file) => {
+                  setUploadFile(file);
+                  return false;
+                }}
+              >
+                <Button type="primary" icon={<UploadOutlined />}>
+                  Select File
+                </Button>
+              </Upload>
+            </Space>
           </Card>
         )}
 

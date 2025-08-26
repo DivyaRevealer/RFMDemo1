@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 import os
 # from controllers.campaign.campaign_controller import create_campaign
 from models import crm_analysis
@@ -16,6 +17,8 @@ from controllers.campaign.campaign_controller import (
     update_campaign,
     get_campaign_run_details,
     save_upload_contacts,
+    export_upload_contacts,
+    generate_upload_template,
 )
 from schemas.campaign.campaign_schema import (
     CampaignCreate,
@@ -38,6 +41,33 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@router.get("/upload/template")
+def download_upload_template_route():
+    buffer = generate_upload_template()
+    headers = {
+        "Content-Disposition": "attachment; filename=campaign_upload_template.xlsx"
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
+
+
+@router.get("/{campaign_id}/upload/download")
+def download_campaign_contacts(
+    campaign_id: int, db: Session = Depends(get_db)
+):
+    buffer = export_upload_contacts(db, campaign_id)
+    headers = {
+        "Content-Disposition": f"attachment; filename=campaign_{campaign_id}_contacts.xlsx"
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
 
 @router.get("/options", response_model=CampaignOptions)
 def read_campaign_options(db: Session = Depends(get_db)):

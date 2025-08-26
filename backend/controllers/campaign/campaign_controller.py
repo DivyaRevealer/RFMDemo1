@@ -1,4 +1,6 @@
 from decimal import Decimal
+from io import BytesIO
+import pandas as pd
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -181,6 +183,7 @@ def update_campaign(db: Session, campaign_id: int, data: CampaignCreate):
 
 
 def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
+    db.query(CampaignUpload).filter(CampaignUpload.campaign_id == campaign_id).delete()
     objs = [
         CampaignUpload(
             campaign_id=campaign_id,
@@ -194,6 +197,32 @@ def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
     if objs:
         db.bulk_save_objects(objs)
         db.commit()
+
+
+def export_upload_contacts(db: Session, campaign_id: int) -> BytesIO:
+    rows = (
+        db.query(CampaignUpload)
+        .filter(CampaignUpload.campaign_id == campaign_id)
+        .all()
+    )
+    df = pd.DataFrame(
+        [
+            {"name": r.name, "mobile_no": r.mobile_no, "email_id": r.email_id}
+            for r in rows
+        ]
+    )
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False)
+    buffer.seek(0)
+    return buffer
+
+
+def generate_upload_template() -> BytesIO:
+    df = pd.DataFrame(columns=["name", "mobile_no", "email_id"])
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False)
+    buffer.seek(0)
+    return buffer
 
 
 def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetails | None:

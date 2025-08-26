@@ -125,7 +125,7 @@
 
 .metrics1 {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -245,4 +245,110 @@
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.5rem;
+}
+
+.metric-card-total {
+  background: url('../images/tile_background.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+.metric-card-total_retention {
+  background: url('../images/tile_retention.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+
+.metric-card-total_return {
+  background: url('../images/tile_return.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+
+.metric-card-total_spending {
+  background: url('../images/tile_spending.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+
+
+.metric-card-total_unit {
+  background: url('../images/tile_unit.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+
+
+.metric-card-total_profit {
+  background: url('../images/tile_profit.png') no-repeat center center;
+  background-size: cover;
+  color: #fff;              /* text color for contrast */
+  border-radius: 10px;      /* rounded corners */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 50px;  
+}
+
+.metric-card-total,
+.metric-card-total_profit,
+.metric-card-total_unit,
+.metric-card-total_spending,
+.metric-card-total_return,
+.metric-card-total_retention {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  overflow: hidden;        /* hide overflow */
+  white-space: nowrap;     /* keep text in one line */
+  text-overflow: ellipsis; /* add "..." if too long */
+}
+
+.metric-card-total h4,
+.metric-card-total_profit h4,
+.metric-card-total_unit h4,
+.metric-card-total_spending h4,
+.metric-card-total_return h4,
+.metric-card-total_retention h4 {
+  font-size: 0.95rem;   /* reduce slightly */
+  margin: 0 0 6px;
+  color: #fff;          /* ensure visible on gradient */
+}
+
+.metric-card-total p,
+.metric-card-total_profit p,
+.metric-card-total_unit p,
+.metric-card-total_spending p,
+.metric-card-total_return p,
+.metric-card-total_retention p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
 }

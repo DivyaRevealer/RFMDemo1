@@ -29,14 +29,30 @@ import { HomeOutlined, BarChartOutlined, CalendarOutlined } from '@ant-design/ic
 
 //const COLORS = ['#4CAF50', '#8BC34A', '#FFC107', '#FF5722'];
 
- const COLORS = [
+//  const COLORS = [
 
-  '#1E8449', // 5: Bought Most Recently (dark green)
-  '#52BE80', // 4
-  '#ABEBC6', // 3
-  '#F5B7B1', // 2
-  '#EC7063'  // 1: Long Time Ago (coral)
- ];
+//   '#1E8449', // 5: Bought Most Recently (dark green)
+//   '#52BE80', // 4
+//   '#ABEBC6', // 3
+//   '#F5B7B1', // 2
+//   '#EC7063'  // 1: Long Time Ago (coral)
+//  ];
+
+// const COLORS = [
+//   '#3A7BD5', // main tile blue
+//   '#00D2FF', // accent cyan
+//   '#4DA6FF', // lighter blue
+//   '#66D9FF', // light cyan
+//   '#1E90FF'  // darker blue
+// ];
+
+const COLORS = [
+  '#00aaaa', // main tile blue
+  '#00b6b6', // accent cyan
+  '#39AAAA', // lighter blue
+  '#19e5e6', // light cyan
+  '#009292'  // darker blue
+];
 
 // Sample Data
 // const metricData = {
@@ -453,30 +469,30 @@ export default function Dashboard() {
 
       {/* Metric Cards */}
       <div className="metrics1">
-        <div className="metric-card1">
-          <h3>Total Customer</h3>
+        <div className="metric-card-total">
+          <h4>Total Customer</h4>
           <p>{metricData.totalCustomers.toLocaleString()}</p>
         </div>
-        <div className="metric-card1">
-          <h3>Unit Per Transaction</h3>
+        <div className="metric-card-total_profit">
+          <h4>Unit Per Transaction</h4>
           <p>{metricData.unitsPerTxn}</p>
         </div>
-        <div className="metric-card1">
-          <h3>Profit Per Customer</h3>
+        <div className="metric-card-total_unit">
+          <h4>Profit Per Customer</h4>
           {/* <p>{metricData.profitPerCustomer.toLocaleString()}</p> */}
            <p>{metricData.profitPerCustomer}</p>
         </div>
-        <div className="metric-card1">
-          <h3>Customer Spending</h3>
+        <div className="metric-card-total_spending">
+          <h4>Customer Spending</h4>
           {/* <p>{metricData.customerSpending.toLocaleString()}</p> */}
           <p>{metricData.customerSpending}</p>
         </div>
-        <div className="metric-card1">
-          <h3>Days to Return</h3>
+        <div className="metric-card-total_return">
+          <h4>Days to Return</h4>
           <p>{metricData.daysToReturn}</p>
         </div>
-        <div className="metric-card1">
-          <h3>Retention Rate</h3>
+        <div className="metric-card-total_retention">
+          <h4>Retention Rate</h4>
           <p>{metricData.retentionRate}%</p>
         </div>
       </div>
