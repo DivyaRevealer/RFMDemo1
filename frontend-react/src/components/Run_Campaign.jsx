@@ -134,16 +134,16 @@ const RunCampaign = () => {
     };
 
   async function startBroadcast() {
-    if (!selectedCampaign) return; // <-- fixed
-    // if (!offerText.trim() || channels.length === 0) {
-    if (
-      !offerText.trim() ||
-      channels.length === 0 ||
-      (channels.includes("WhatsApp") && !whatsappNumber.trim())
-    ) {
-      setStatus("error");
-      return;
-    }
+    // if (!selectedCampaign) return; // <-- fixed
+    // // if (!offerText.trim() || channels.length === 0) {
+    // if (
+    //   !offerText.trim() ||
+    //   channels.length === 0 ||
+    //   (channels.includes("WhatsApp") && !whatsappNumber.trim())
+    // ) {
+    //   setStatus("error");
+    //   return;
+    // }
     setStatus("sending");
     setProgress(0);
 
@@ -451,8 +451,9 @@ const RunCampaign = () => {
                       </Option>
                     ))}
                   </Select>
-
+                  <div>
                   <Title level={5} style={{ marginTop: 20, marginBottom: 12 }}>Choose Broadcasting Mode</Title>
+                  <div className="flex flex-col gap-2 mb-4">
                   <Checkbox.Group value={channels} onChange={setChannels}>
                     <Space direction="vertical" size={8} style={{ width: "100%", }}>
                       {/* WhatsApp row */}
@@ -461,64 +462,76 @@ const RunCampaign = () => {
                           <Checkbox value="WhatsApp">WhatsApp</Checkbox>
                         </div>
                         {channels.includes("WhatsApp") && campaignDetails?.based_on !== "upload" && (
-                          <Input
+                          <textarea
                             placeholder="Enter WhatsApp number"
                             value={whatsappNumber}
                             onChange={(e) => setWhatsappNumber(e.target.value)}
-                            style={{ maxWidth: 280 }}
+                            style={{ minWidth: 280 }}
                             size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
+                            
                           />
+                        
                         )}
                       </div>
-
+                      <br />
                       {/* SMS row */}
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: "100px" }}>
                           <Checkbox value="SMS">SMS</Checkbox>
                         </div>
                         {channels.includes("SMS") && campaignDetails?.based_on !== "upload" && (
-                          <Input
+                          <textarea
                             placeholder="Enter SMS number"
                             value={smsNumber}
                             onChange={(e) => setSmsNumber(e.target.value)}
-                            style={{ maxWidth: 280 }}
+                            style={{ minWidth: 280 }}
                             size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
+                            
                           />
                         )}
                       </div>
-
+                      <br />
                       {/* Email row */}
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: "100px" }}>
                           <Checkbox value="Email">Email</Checkbox>
                         </div>
                         {channels.includes("Email") && campaignDetails?.based_on !== "upload" && (
-                          <Input
+                          <textarea
                             placeholder="Enter email address"
                             value={emailAddress}
                             onChange={(e) => setEmailAddress(e.target.value)}
-                            style={{ maxWidth: 320 }}
+                            style={{ minWidth: 280 }}
                             size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
                           />
                         )}
                       </div>
                     </Space>
                   </Checkbox.Group>
-
+                  </div>
                   {/* <Title level={5} style={{ marginTop: 20, marginBottom: 8 }}>Promo Code</Title> */}
                   {/* <Space>
                     <Button style={{background: '#519751ff',fontWeight:"bold",fontSize: '17px'}}onClick={generatePromo}>Generate Promo Code</Button>
                     {promoCode && <Tag level={15} color='#128012ff' style={{fontWeight:"bold",fontSize: '22px'}}>{promoCode}</Tag>}
                   </Space> */}
 
+                  <div className="flex gap-3">
                   <Space style={{ marginTop: 20 }}>
-                    <Button type="primary" onClick={startBroadcast} disabled={!promoCode}>
+                    <Button type="primary" onClick={startBroadcast}>
                       Start Broadcasting
                     </Button>
                      <Button onClick={handleGoBack}>Go Back</Button>
                   </Space>
+                  </div>
+                  </div>
 
-                  <div style={{ marginTop: 16 }}>
+                  {/* <div style={{ marginTop: 16 }}>
                     {status === "error" && (
                       // <Alert type="error" showIcon message="Enter offer text and select at least one channel." />
                       <Alert
@@ -536,7 +549,7 @@ const RunCampaign = () => {
                     {status === "done" && (
                       <Alert type="success" showIcon message="Broadcast completed. You can go back to the main menu." />
                     )}
-                  </div>
+                  </div> */}
                 </Card>
               )}
             </Col>

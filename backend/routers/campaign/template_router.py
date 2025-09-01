@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -80,6 +81,47 @@ async def list_templates():
     url = "https://cloudapi.wbbox.in/api/v1.0/templates"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
+@router.get("/sendWatsAppText")
+async def sendWatsAppText(req: Request):
+    requestParams = await req.json()
+    #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
+    
+    API_KEY = os.getenv("API_KEY")
+    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")        
+    print("API_KEY---------------- ",API_KEY)
+    url = f"https://cloudapi.wbbox.in/api/v1.0/send-template/{CHANNEL_NUMBER}"
+    
+   # headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "apikey": "{API_KEY}",
+    }
+    clean_recipient = re.sub(r"\D", "", str(requestParams.get("phone_numbers")))
+    clean_recipient = str(clean_recipient).strip()
+    payload= {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": "919742743197",
+                "type": "template",
+                "template": {
+                    "name": requestParams.get("template_name"),
+                    "language": {
+                    "code": "en"
+                    },
+                    "components": []
+                }
+            }
+    try:
+        resp = requests.post(url, json=payload, headers=headers)
         response = requests.get(url, headers=headers)
         response.raise_for_status()
     except requests.HTTPError as e:
