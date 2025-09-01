@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import api from "../api";  
 import {
   // Card, Typography, Select, Space, Modal, Button, Input,
   // Checkbox, Tag, Alert, Progress, message, Row, Col
@@ -17,7 +16,6 @@ import {
   Col,
 } from "antd";
 
-
 // import { Statistic } from "antd";
 // import { UserOutlined } from "@ant-design/icons";
 const { Option } = Select;
@@ -26,9 +24,6 @@ const { TextArea } = Input;
 
 const RunCampaign = () => {
   const [campaigns, setCampaigns] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [campaignDetails, setCampaignDetails] = useState(null);
 
@@ -46,7 +41,6 @@ const RunCampaign = () => {
 
   useEffect(() => {
     //fetch("http://localhost:4001/campaign")
-    loadTemplates();
     fetch("/api/campaign")
       .then((res) => res.json())
       .then(setCampaigns)
@@ -106,32 +100,6 @@ const RunCampaign = () => {
     setPromoCode(`CAM${yymmdd}${rand}`);
     setStatus("ready");
   }
-
-  const loadTemplates = () => {
-      api
-        //.get('/getAlltemplates')
-        .get("/campaign/templates/getAlltemplates")
-        .then(res => {
-          console.log("res.data.templates----- ",res)
-          const list = (res.data.templates || res.data || []).map(t => ({
-            key: t.id || t.name,
-            id: Number(t.id) || 0,  
-            name: t.name,
-          //   createdAt: t.created_at || t.createdAt,
-          //   modifiedAt: t.modified_at || t.modifiedAt,
-          //   templateName: t.template_name || t.templateName || t.name,
-            templateType: t.template_type || t.templateType || t.category,
-            templateCreateStatus:
-             t.Status,
-          }));
-         // setTemplates(list);
-         const approved = list.filter(t => t.templateCreateStatus === "APPROVED");
-         approved.sort((a, b) => (b.id || 0) - (a.id || 0));
-  
-         setTemplates(approved);
-        })
-        .catch(() => message.error('Failed to fetch templates'));
-    };
 
   async function startBroadcast() {
     if (!selectedCampaign) return; // <-- fixed
@@ -424,33 +392,13 @@ const RunCampaign = () => {
              <Col xs={24} md={showDetails ? 10 : 24}>
                 {showNext && (
                   <Card>
-                  {/* <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Offer Details</Title>
+                  <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Offer Details</Title>
                   <TextArea
                     rows={3}
                     placeholder="e.g., ₹500 discount on minimum purchase of ₹50,000"
                     value={offerText}
                     onChange={(e) => setOfferText(e.target.value)}
-                  /> */}
-
-                  <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Template Name</Title>
-                  <Select
-                    showSearch  
-                    placeholder="Select an approved template"
-                    style={{ width: "100%" }}
-                    value={selectedTemplate}
-                    onChange={(value) => setSelectedTemplate(value)}
-                    allowClear
-                    optionFilterProp="children"                 // ✅ enables filtering by option text
-                    filterOption={(input, option) =>
-                      option?.children.toLowerCase().includes(input.toLowerCase())
-                    }
-                  >
-                    {templates.map(t => (
-                      <Option key={t.id} value={t.name}>
-                        {t.name}
-                      </Option>
-                    ))}
-                  </Select>
+                  />
 
                   <Title level={5} style={{ marginTop: 20, marginBottom: 12 }}>Choose Broadcasting Mode</Title>
                   <Checkbox.Group value={channels} onChange={setChannels}>
@@ -505,11 +453,11 @@ const RunCampaign = () => {
                     </Space>
                   </Checkbox.Group>
 
-                  {/* <Title level={5} style={{ marginTop: 20, marginBottom: 8 }}>Promo Code</Title> */}
-                  {/* <Space>
+                  <Title level={5} style={{ marginTop: 20, marginBottom: 8 }}>Promo Code</Title>
+                  <Space>
                     <Button style={{background: '#519751ff',fontWeight:"bold",fontSize: '17px'}}onClick={generatePromo}>Generate Promo Code</Button>
                     {promoCode && <Tag level={15} color='#128012ff' style={{fontWeight:"bold",fontSize: '22px'}}>{promoCode}</Tag>}
-                  </Space> */}
+                  </Space>
 
                   <Space style={{ marginTop: 20 }}>
                     <Button type="primary" onClick={startBroadcast} disabled={!promoCode}>

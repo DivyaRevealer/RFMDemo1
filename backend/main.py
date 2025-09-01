@@ -7,6 +7,7 @@ from controllers import auth, dashboard, filters, campaign
 from fastapi.middleware.cors import CORSMiddleware
 from routers.campaign.campaign_router import router as campaign_router
 from models.campaign.campaign_model import Base as CampaignBase
+from routers.campaign.template_router import router as templates_router
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,6 +43,7 @@ app.include_router(dashboard.router, prefix="/api")
 app.include_router(filters.router, prefix="/api")
 #app.include_router(campaign.router, prefix="/api")
 app.include_router(campaign_router, prefix="/api")
+app.include_router(templates_router, prefix="/api")
 
 @app.get("/")
 def root():

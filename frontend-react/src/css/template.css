@@ -1,0 +1,26 @@
+/* Header cells */
+.custom-table .ant-table-thead > tr > th {
+  background: #454452 !important;   /* purple header */
+  color: #fff !important;           /* white text */
+  font-weight: bold;
+  text-align: center;
+  border: 1px solid #d9d9d9 !important; /* force border */
+}
+
+/* Body cells */
+.custom-table .ant-table-tbody > tr > td {
+  border: 1px solid #d9d9d9 !important;
+  padding: 6px 8px;   /* compact rows */
+  font-size: 13px;
+}
+
+/* Table outer border */
+.custom-table .ant-table {
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 8px;
+}
+
+/* Optional: zebra stripes */
+.custom-table .ant-table-tbody > tr:nth-child(odd) > td {
+  background: #fafafa;
+}

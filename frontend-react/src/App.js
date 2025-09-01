@@ -7,6 +7,7 @@ import Run_Campaign from "./components/Run_Campaign";
 import Layout from "./components/Layout";
 import Campaign_Summary from "./components/Campaign_Summary";
 import Campaign_Dashboard from "./components/Campaign_Dashboard";
+import TemplateCreation from "./components/TemplateCreation";
 
 const isAuthenticated = () => !!localStorage.getItem("token");
 const PrivateRoute = ({ children }) =>
@@ -75,6 +76,18 @@ export default function App() {
             <PrivateRoute>
               <Layout>
                 <Run_Campaign />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* Protected Template Creation page */}
+        <Route
+          path="/template"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <TemplateCreation />
               </Layout>
             </PrivateRoute>
           }

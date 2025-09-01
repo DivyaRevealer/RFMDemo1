@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 // import { FaBars, FaBullseye, FaPlusCircle, FaPlayCircle, FaSignOutAlt, FaListAlt  } from 'react-icons/fa';
-import { FaBars, FaBullseye, FaSignOutAlt, FaPlusCircle, FaPlayCircle, FaChartBar, FaListAlt  } from 'react-icons/fa';
+//import { FaBars, FaBullseye, FaSignOutAlt, FaPlusCircle, FaPlayCircle, FaChartBar, FaListAlt  } from 'react-icons/fa';
+import { FaBars, FaBullseye, FaSignOutAlt, FaPlusCircle, FaPlayCircle, FaChartBar, FaFileAlt , FaListAlt  } from 'react-icons/fa';
+
 import './Layout.css';
 
 export default function Layout({ children }) {
@@ -44,6 +46,9 @@ export default function Layout({ children }) {
 
           <Link to="/run-campaign" className="icon-btn nav-btn" title="Run Campaign">
             <FaPlayCircle />
+          </Link>
+          <Link to="/template" className="nav-btn" title="Template Creation">
+            <FaFileAlt/>
           </Link>
         </div>
 
