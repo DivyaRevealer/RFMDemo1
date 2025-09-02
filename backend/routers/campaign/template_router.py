@@ -1,7 +1,7 @@
 import os
 import re
 import requests
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -143,26 +143,83 @@ async def sendWatsAppText(req: Request):
     except requests.HTTPError:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     
-    # clean_recipient = re.sub(r"\D", "", str(requestParams.get("phone_numbers")))
-    # clean_recipient = str(clean_recipient).strip()
-    # payload= {
-    #             "messaging_product": "whatsapp",
-    #             "recipient_type": "individual",
-    #             "to": "919742743197",
-    #             "type": "template",
-    #             "template": {
-    #                 "name": requestParams.get("template_name"),
-    #                 "language": {
-    #                 "code": "en"
-    #                 },
-    #                 "components": []
-    #             }
-    #         }
-    # try:
-    #     resp = requests.post(url, json=payload, headers=headers)
-    #     response = requests.get(url, headers=headers)
-    #     response.raise_for_status()
-    # except requests.HTTPError as e:
-        
-    #     raise HTTPException(status_code=response.status_code, detail=response.text)
-    # return response.json()
+@router.post("/create-text-template")
+async def create_text_template(req: Request):
+    """Proxy endpoint dedicated for text templates."""
+    return await create_template(req)
+
+
+@router.post("/create-image-template")
+async def create_image_template(
+    name: str = Form(...),
+    language: str = Form(...),
+    category: str = Form(...),
+    header: str = Form(""),
+    body: str = Form(...),
+    footer: str = Form(""),
+    file: UploadFile = File(...),
+):
+    contents = await file.read()
+    if len(contents) > 4 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image must be less than 4MB")
+    payload = {
+        "name": name,
+        "language": language,
+        "category": category,
+        "components": [
+            {"type": "HEADER", "format": "IMAGE"},
+            {"type": "BODY", "text": body},
+            {"type": "FOOTER", "text": footer},
+        ],
+    }
+    API_KEY = os.getenv("API_KEY")
+    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")
+    url = f"https://cloudapi.wbbox.in/api/v1.0/create-templates/{CHANNEL_NUMBER}"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
+@router.post("/create-video-template")
+async def create_video_template(
+    name: str = Form(...),
+    language: str = Form(...),
+    category: str = Form(...),
+    header: str = Form(""),
+    body: str = Form(...),
+    footer: str = Form(""),
+    file: UploadFile = File(...),
+):
+    contents = await file.read()
+    if len(contents) > 9 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Video must be less than 9MB")
+    payload = {
+        "name": name,
+        "language": language,
+        "category": category,
+        "components": [
+            {"type": "HEADER", "format": "VIDEO"},
+            {"type": "BODY", "text": body},
+            {"type": "FOOTER", "text": footer},
+        ],
+    }
+    API_KEY = os.getenv("API_KEY")
+    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")
+    url = f"https://cloudapi.wbbox.in/api/v1.0/create-templates/{CHANNEL_NUMBER}"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()

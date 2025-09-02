@@ -81,37 +81,15 @@ export default function TemplateCreation() {
   const hideModal = () => {
     setOpen(false);
     form.resetFields();
-    setTemplateType("text");
-    setMediaType("image");
-    setMediaFile(null);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      setMediaFile(null);
-      return;
-    }
-    const limit = mediaType === "image" ? 4 * 1024 * 1024 : 9 * 1024 * 1024;
-    if (file.size > limit) {
-      message.error(`File must be smaller than ${mediaType === "image" ? "4" : "9"}MB`);
-      e.target.value = null;
-      setMediaFile(null);
-      return;
-    }
-    setMediaFile(file);
-  };
   const submit = () => {
 
       form
-          // .validateFields()
-          // .then(values => {
-            // check if body has placeholders like {{1}}
           .validateFields()
           .then(values => {
-          if (templateType === "text") {
+            // check if body has placeholders like {{1}}
             const bodyHasVars = /\{\{\d+\}\}/.test(values.body);
-            
 
             const bodyComponent = bodyHasVars
               ? {
@@ -137,55 +115,23 @@ export default function TemplateCreation() {
 
             console.log("payload----------", JSON.stringify(payload));
 
-            // api
-            //   .post("/campaign/templates/create-template", { channel: values.channel, ...payload })
-            //   .then((res) => {
-            //     //message.success("Template created");
-            //     // if backend returns sync status:
-            //     if (res.data.success==true) {
-            //       console.log("Succesfull!!!!!!!!!!");
-            //       syncTemplate(values.name)
-             api.post("/campaign/templates/create-text-template", payload)
-              .then(res => {
-                if (res.data.success === true) {
-                  syncTemplate(values.name);
+            api
+              .post("/campaign/templates/create-template", { channel: values.channel, ...payload })
+              .then((res) => {
+                //message.success("Template created");
+                // if backend returns sync status:
+                if (res.data.success==true) {
+                  console.log("Succesfull!!!!!!!!!!");
+                  syncTemplate(values.name)
+                  
                 }
 
                 hideModal();
               })
               .catch(() => message.error("Failed to create template"));
-        } else {
-            if (!mediaFile) {
-              message.error("Please upload media file");
-              return;
-            }
-            const formData = new FormData();
-            formData.append("name", values.name.toLowerCase().replace(/[^a-z0-9_]/g, "_"));
-            formData.append("language", values.language);
-            formData.append("category", values.category);
-            formData.append("header", values.header || "");
-            formData.append("body", values.body);
-            formData.append("footer", values.footer || "");
-            formData.append("file", mediaFile);
-            const endpoint =
-              mediaType === "image"
-                ? "/campaign/templates/create-image-template"
-                : "/campaign/templates/create-video-template";
-            api
-              .post(endpoint, formData, {
-                headers: { "Content-Type": "multipart/form-data" }
-              })
-              .then(res => {
-                if (res.data.success === true) {
-                  syncTemplate(values.name);
-                }
-                hideModal();
-              })
-              .catch(() => message.error("Failed to create template"));
-          }
-        })
-        .catch(() => {});
-    };
+          })
+          .catch(() => {});
+      };
 
   const syncTemplate = (templateName) => {
     api
@@ -315,48 +261,6 @@ export default function TemplateCreation() {
            
           </Select>
         </Form.Item>
-        <Form.Item
-          name="templateType"
-          label="Template Type"
-          rules={[{ required: true, message: "Please select template type" }]}
-        >
-          <Select
-            value={templateType}
-            onChange={(val) => setTemplateType(val)}   // ✅ update state
-            placeholder="Select template type"
-          >
-            <Option value="text">Text</Option>
-            <Option value="media">Media</Option>
-          </Select>
-        </Form.Item>
-
-        {/* If user selects Media → show Radio + Upload */}
-        {templateType === "media" && (
-          <Form.Item label="Media Options" required>
-            <Radio.Group
-              onChange={(e) => setMediaType(e.target.value)}
-              value={mediaType}
-              style={{ marginBottom: 8 }}
-            >
-              <Radio value="image">Image</Radio>
-              <Radio value="video">Video</Radio>
-            </Radio.Group>
-
-            {mediaType === "image" && (
-              <div>
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-                <div style={{ fontSize: "12px" }}>Upload image less than 4MB</div>
-              </div>
-            )}
-
-            {mediaType === "video" && (
-              <div>
-                <input type="file" accept="video/*" onChange={handleFileChange} />
-                <div style={{ fontSize: "12px" }}>Upload video less than 9MB</div>
-              </div>
-            )}
-          </Form.Item>
-        )}
         <Form.Item name="header" label="Header Text">
           <Input />
         </Form.Item>
