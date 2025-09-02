@@ -89,7 +89,7 @@ async def list_templates():
     return response.json()
 
 
-@router.post("/sendWatsAppText")
+@router.get("/sendWatsAppText")
 async def sendWatsAppText(req: Request):
     data = await req.json()
     numbers_str = data.get("phone_numbers", "")
@@ -119,30 +119,31 @@ async def sendWatsAppText(req: Request):
     }
 
     
-     # Clean and join the numbers into a single comma-separated string
-    cleaned_numbers = [re.sub(r"\D", "", n) for n in numbers_str.split(",")]
-    recipients = ",".join(filter(None, cleaned_numbers))
+    results = []
+    for raw in numbers_str.split(","):
+        clean_recipient = re.sub(r"\D", "", raw)
+        if not clean_recipient:
+            continue
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": clean_recipient,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": "en"},
+            },
+            "components": []
+        }
+        try:
+            resp = requests.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            results.append({"to": clean_recipient, "status": resp.data})
+        except requests.HTTPError:
+            results.append({"to": clean_recipient, "status": "failed", "detail": resp.text})
 
-    if not recipients:
-        raise HTTPException(status_code=400, detail="No valid phone numbers provided")
+    return {"results": results}
 
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": recipients,
-        "type": "template",
-        "template": {
-            "name": template_name,
-            "language": {"code": "en"},
-        },
-        "components": []
-    }
-    try:
-        resp = requests.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.HTTPError:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    
     # clean_recipient = re.sub(r"\D", "", str(requestParams.get("phone_numbers")))
     # clean_recipient = str(clean_recipient).strip()
     # payload= {

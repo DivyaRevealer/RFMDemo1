@@ -37,7 +37,8 @@ const RunCampaign = () => {
 
   const [offerText, setOfferText] = useState("");
   const [channels, setChannels] = useState([]);
-  const [whatsappNumber, setWhatsappNumber] = useState("");
+  // const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappNumbers, setWhatsappNumbers] = useState("");
   const [smsNumber, setSmsNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [promoCode, setPromoCode] = useState("");
@@ -93,7 +94,8 @@ const RunCampaign = () => {
     setShowNext(false);
     setOfferText("");
     setChannels([]);
-    setWhatsappNumber("");
+    // setWhatsappNumber("");
+    setWhatsappNumbers("");
     setPromoCode("");
     setStatus("idle");
     setProgress(0);
@@ -134,28 +136,22 @@ const RunCampaign = () => {
     };
 
   async function startBroadcast() {
-    // if (!selectedCampaign) return; // <-- fixed
-    // // if (!offerText.trim() || channels.length === 0) {
-    // if (
-    //   !offerText.trim() ||
-    //   channels.length === 0 ||
-    //   (channels.includes("WhatsApp") && !whatsappNumber.trim())
-    // ) {
-    //   setStatus("error");
-    //   return;
-    // }
+   
     setStatus("sending");
     setProgress(0);
 
     try {
-      // await api.post(`/campaign/run/${selectedCampaign}/start`, { offerText, channels, promoCode });
-        // Send WhatsApp message through backend if selected
+      
       if (channels.includes("WhatsApp")) {
-        await fetch("/api/campaign/send-whatsapp", {
+        await fetch("/api/campaign/templates/sendWatsAppText", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: whatsappNumber, body: offerText }),
+          body: JSON.stringify({
+            phone_numbers: whatsappNumbers,
+            template_name: selectedTemplate,
+          }),
         });
+       
       }
       const timer = setInterval(() => {
         setProgress((p) => {
@@ -463,9 +459,9 @@ const RunCampaign = () => {
                         </div>
                         {channels.includes("WhatsApp") && campaignDetails?.based_on !== "upload" && (
                           <textarea
-                            placeholder="Enter WhatsApp number"
-                            value={whatsappNumber}
-                            onChange={(e) => setWhatsappNumber(e.target.value)}
+                            placeholder="Enter WhatsApp numbers separated by commas"
+                            value={whatsappNumbers}
+                            onChange={(e) => setWhatsappNumbers(e.target.value)}
                             style={{ minWidth: 280 }}
                             size="middle"
                             className="w-full border rounded p-2"
