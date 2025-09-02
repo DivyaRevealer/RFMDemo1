@@ -193,11 +193,11 @@ const RunCampaign = () => {
       <Card title="Run Campaign" style={{ marginTop: 1 }}>
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <div>
-            <Text strong>Choose Campaign (within timeframe):</Text>
-            <div style={{ marginTop: 2 }}>
+            <Text strong>Choose Campaign :</Text>
+            <div style={{ marginTop: 2 ,paddingLeft:"26px"}}>
               <Select
                 placeholder="Select a campaign"
-                style={{ width: "100%" }}
+                style={{ width: "39%" }}
                 onChange={handleSelect}
                 value={selectedCampaign}
                 allowClear
@@ -446,7 +446,7 @@ const RunCampaign = () => {
                     value={offerText}
                     onChange={(e) => setOfferText(e.target.value)}
                   /> */}
-
+                  <div style={{ width: "40%" }}>
                   <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Template Name</Title>
                   <Select
                     showSearch  
@@ -466,6 +466,7 @@ const RunCampaign = () => {
                       </Option>
                     ))}
                   </Select>
+                  </div>
                   <div>
                   <Title level={5} style={{ marginTop: 20, marginBottom: 12 }}>Choose Broadcasting Mode</Title>
                   <div className="flex flex-col gap-2 mb-4">
