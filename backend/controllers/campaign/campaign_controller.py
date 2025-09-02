@@ -1,6 +1,7 @@
 from decimal import Decimal
 from io import BytesIO
 import pandas as pd
+import math
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -13,6 +14,7 @@ from models.campaign.rfm_detail_model import RFMDetail
 from schemas.campaign.campaign_schema import CampaignCreate
 from models.crm_analysis import CRMAnalysis as CRMAnalysisModel
 from schemas.crm_analysis import CRMAnalysis as CRMAnalysisSchema
+
 #from schemas.campaign.campaign_schema import CampaignOptions
 # from schemas.campaign.campaign_schema import CampaignCreate, CampaignOptions
 from schemas.campaign.campaign_schema import (
@@ -181,15 +183,39 @@ def update_campaign(db: Session, campaign_id: int, data: CampaignCreate):
     db.refresh(campaign)
     return campaign
 
+def clean_value(val):
+    if val is None:
+        return None
+    # handle pandas NaN
+    if isinstance(val, float) and math.isnan(val):
+        return None
+    return val
+
+
+# def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
+#     db.query(CampaignUpload).filter(CampaignUpload.campaign_id == campaign_id).delete()
+#     objs = [
+#         CampaignUpload(
+#             campaign_id=campaign_id,
+#             name=contact.get("name"),
+#             mobile_no=str(contact.get("mobile_no")),
+#             email_id=contact.get("email_id"),
+#         )
+#         for contact in contacts
+#         if contact.get("mobile_no") is not None
+#     ]
+#     if objs:
+#         db.bulk_save_objects(objs)
+#         db.commit()
 
 def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
     db.query(CampaignUpload).filter(CampaignUpload.campaign_id == campaign_id).delete()
     objs = [
         CampaignUpload(
             campaign_id=campaign_id,
-            name=contact.get("name"),
+            name=clean_value(contact.get("name")),
             mobile_no=str(contact.get("mobile_no")),
-            email_id=contact.get("email_id"),
+            email_id=clean_value(contact.get("email_id")),
         )
         for contact in contacts
         if contact.get("mobile_no") is not None
@@ -197,7 +223,6 @@ def save_upload_contacts(db: Session, campaign_id: int, contacts: list[dict]):
     if objs:
         db.bulk_save_objects(objs)
         db.commit()
-
 
 def export_upload_contacts(db: Session, campaign_id: int) -> BytesIO:
     rows = (

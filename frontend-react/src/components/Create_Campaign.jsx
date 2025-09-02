@@ -258,7 +258,12 @@ export default function Create_Campaign() {
         message.success('Campaign saved successfully');
       }
       const newId = campaignId || resp?.data?.id;
+      if (!newId) {
+      message.error('Campaign save was not successful. Please try again.');
+      return;
+    }
       if (values.basedOn === 'upload' && uploadFile && newId) {
+        try {
         const formData = new FormData();
         formData.append('file', uploadFile);
         await api.post(`/campaign/${newId}/upload`, formData, {
@@ -266,10 +271,31 @@ export default function Create_Campaign() {
         });
         message.success('Contacts uploaded');
       }
+      catch (uploadErr) {
+        console.error('🚨 Upload failed:', uploadErr?.response?.data || uploadErr);
+
+        if (!campaignId) {
+            try {
+              await api.delete(`/campaign/${newId}`);
+              message.error('Upload failed. Campaign has been reverted.');
+            } catch (rollbackErr) {
+              console.error('⚠️ Rollback failed:', rollbackErr?.response?.data || rollbackErr);
+              message.error('Upload failed, and rollback could not be completed. Please check manually.');
+            }
+          } else {
+            message.error('Upload failed. Campaign not reverted since it was an update.');
+          }
+        }
+    // } catch (err) {
+    //   console.error('🚨 Save failed:', err?.response?.data || err);
+    //   message.error('Failed to save campaign');
+    // }
+    }
     } catch (err) {
       console.error('🚨 Save failed:', err?.response?.data || err);
       message.error('Failed to save campaign');
     }
+
   };
 
   // ---------- dependent geography ----------

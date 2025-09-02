@@ -9,6 +9,7 @@ import os
 # from controllers.campaign.campaign_controller import create_campaign
 from models import crm_analysis
 from models.campaign.campaign_model import Campaign
+from models.campaign.upload_contact_model import CampaignUpload
 from controllers.campaign.campaign_controller import (
     create_campaign,
     get_campaign_options,
@@ -69,6 +70,16 @@ def download_campaign_contacts(
         headers=headers,
     )
 
+@router.get("/{campaign_id}/upload/numbers")
+def get_upload_numbers_route(campaign_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(CampaignUpload.mobile_no)
+        .filter(CampaignUpload.campaign_id == campaign_id)
+        .all()
+    )
+    numbers = [r[0] for r in rows]
+    return {"phone_numbers": ",".join(numbers)}
+
 @router.get("/options", response_model=CampaignOptions)
 def read_campaign_options(db: Session = Depends(get_db)):
     return get_campaign_options(db)
@@ -82,6 +93,22 @@ def create_campaign_route(
         return create_campaign(db, campaign)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.delete("/{campaign_id}")
+def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
+    campaign = get_campaign(db, campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    # Optional: also delete contacts tied to this campaign
+    # db.query(campaign_controller.CampaignUpload).filter(
+    #     campaign_controller.CampaignUpload.campaign_id == campaign_id
+    # ).delete()
+
+    db.delete(campaign)
+    db.commit()
+    return {"message": "Campaign deleted successfully"}
+
 
 
 @router.get("/", response_model=list[CampaignOut])
@@ -233,3 +260,4 @@ def send_whatsapp(req: WhatsAppMessage):
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+    

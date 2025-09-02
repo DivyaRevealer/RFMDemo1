@@ -140,18 +140,37 @@ const RunCampaign = () => {
     setStatus("sending");
     setProgress(0);
 
+
     try {
+
+      let numbers = whatsappNumbers;
+      if (campaignDetails?.based_on === "upload") {
+        const res = await fetch(`/api/campaign/${selectedCampaign}/upload/numbers`);
+        const data = await res.json();
+        numbers = data.phone_numbers || "";
+      }
       
       if (channels.includes("WhatsApp")) {
-        await fetch("/api/campaign/templates/sendWatsAppText", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone_numbers: whatsappNumbers,
-            template_name: selectedTemplate,
-          }),
-        });
-       
+        if (campaignDetails?.based_on === "upload") {
+          await fetch("/api/campaign/templates/sendWatsAppText", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone_numbers: numbers,
+              template_name: selectedTemplate,
+            }),
+          });
+        }
+        else{
+          await fetch("/api/campaign/templates/sendWatsAppText", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone_numbers: whatsappNumbers,
+              template_name: selectedTemplate,
+            }),
+          });
+      }
       }
       const timer = setInterval(() => {
         setProgress((p) => {
