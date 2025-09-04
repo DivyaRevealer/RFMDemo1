@@ -152,7 +152,8 @@ const RunCampaign = () => {
       
       if (channels.includes("WhatsApp")) {
         if (campaignDetails?.based_on === "upload") {
-          await fetch("/api/campaign/templates/sendWatsAppText", {
+          //await fetch("/api/campaign/templates/sendWatsAppText", {
+            await fetch("/api/campaign/templates/sendWatsAppImage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -162,7 +163,8 @@ const RunCampaign = () => {
           });
         }
         else{
-          await fetch("/api/campaign/templates/sendWatsAppText", {
+          //await fetch("/api/campaign/templates/sendWatsAppText", {
+            await fetch("/api/campaign/templates/sendWatsAppImage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
