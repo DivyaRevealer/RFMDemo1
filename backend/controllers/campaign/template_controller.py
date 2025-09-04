@@ -1,27 +1,14 @@
 import os
 import re
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from database import get_db
 from utils.file_server import upload_image_to_api
 from utils.file_server import upload_video_to_api
 from dotenv import load_dotenv
-from models.campaign.template_detail_model import template_details
-from sqlalchemy.orm import Session
 
-# Load environment variables from .env
-# load_dotenv()
-
-
-
-#router = APIRouter(tags=["templates"])
-router = APIRouter(prefix="/campaign/templates", tags=["templates"])
-
-#@router.post("/templates")
-@router.post("/create-template")
-async def create_template(req: Request):
-    payload = await req.json()
+def create_template(payload):
+    #payload = await req.json()
     #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
     #channel = payload.pop("channel", os.getenv("CHANNEL_NUMBER", "917996666220"))
     #channel = "917996666220"
@@ -36,13 +23,6 @@ async def create_template(req: Request):
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         print("response------ ",response)
-        # saveSuccess=save_template_details(
-        #                 db=db,
-        #                 template_name=payload.get("name"),                       
-        #                 template_type="text",
-        #                 media_type=""
-        #             )
-    
         
     except requests.HTTPError as e:
         raise HTTPException(status_code=response.status_code, detail=response.text)
@@ -50,9 +30,8 @@ async def create_template(req: Request):
     #return "success"
 
 
-@router.post("/sync-template")
-async def sync_template(req: Request):
-    payload = await req.json()
+def sync_template(payload):
+    
     print("payload------------ ",payload.get("name"))
     #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
     #channel = payload.pop("channel", os.getenv("CHANNEL_NUMBER", "917996666220"))
@@ -82,8 +61,7 @@ async def sync_template(req: Request):
         raise HTTPException(status_code=sync_resp.status_code, detail=sync_resp.text)
     #return response.json()
 
-@router.get("/getAlltemplates")
-async def list_templates():
+def list_templates():
     
     #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
     
@@ -101,9 +79,8 @@ async def list_templates():
     return response.json()
 
 
-@router.post("/sendWatsAppText")
-async def sendWatsAppText(req: Request):
-    data = await req.json()
+def sendWatsAppText(data):
+    
     numbers_str = data.get("phone_numbers", "")
     template_name = data.get("template_name")
 
@@ -155,50 +132,21 @@ async def sendWatsAppText(req: Request):
     except requests.HTTPError:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     
-@router.post("/create-text-template")
-async def create_text_template(req: Request,db: Session = Depends(get_db)):
-    # """Proxy endpoint dedicated for text templates."""
-    # return await create_template(req)
-    payload = await req.json()
-    #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
-    #channel = payload.pop("channel", os.getenv("CHANNEL_NUMBER", "917996666220"))
-    #channel = "917996666220"
-    API_KEY = os.getenv("API_KEY")
-    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")     
-    url = f"https://cloudapi.wbbox.in/api/v1.0/create-templates/{CHANNEL_NUMBER}"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    }
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        print("response------ ",response)
-        saveSuccess=save_template_details(
-                        db=db,
-                        template_name=payload.get("name"),                       
-                        template_type="text",
-                        media_type=""
-                    )
-    
-        
-    except requests.HTTPError as e:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
-    return response.json()
+def create_text_template(payload):
+    """Proxy endpoint dedicated for text templates."""
+    return create_template(payload)
 
 
 
-@router.post("/create-image-template")
-async def create_image_template(
+def create_image_template(
     name: str = Form(...),
     language: str = Form(...),
     category: str = Form(...),
     body: str = Form(...),
     footer: str = Form(""),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
 ):
-    contents = await file.read()
+    contents = file.read()
     if len(contents) > 4 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Image must be less than 4MB")
 
@@ -215,18 +163,6 @@ async def create_image_template(
     #save_to_windows_server(contents, file.filename)
     responsefromapi=upload_image_to_api(upload_url,API_KEY,contents,file.filename)
     hvalue_url = responsefromapi["data"]["HValue"]
-    image_url = responsefromapi["data"]["ImageUrl"]
-   
-    if hvalue_url and image_url:
-         # Save details to DB
-        saveSuccess=save_template_details(
-                        db=db,
-                        template_name=name,
-                        file_url=image_url,
-                        file_hvalue=hvalue_url,
-                        template_type="media",
-                        media_type="image"
-                    )
     
     print("==========================   ",hvalue_url)
     # Build payload with HEADER, BODY, FOOTER, BUTTONS (like your example)
@@ -265,18 +201,16 @@ async def create_image_template(
     return response.json()
 
 
-@router.post("/create-video-template")
-async def create_video_template(
+def create_video_template(
     name: str = Form(...),
     language: str = Form(...),
     category: str = Form(...),
+  #  header: str = Form(""),
     body: str = Form(...),
     footer: str = Form(""),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
 ):
-    
-    contents = await file.read()
+    contents = file.read()
     if len(contents) > 9 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Video must be less than 9MB")
     
@@ -288,19 +222,6 @@ async def create_video_template(
     print("==========================   ",responsefromapi)
     hvalue_url = responsefromapi["data"]["HValue"]
     #responsefromapi["data"]["HValue"]
-    video_url = responsefromapi["data"]["ImageUrl"]
-   
-    if hvalue_url and video_url:
-         # Save details to DB
-        saveSuccess=save_template_details(
-                        db=db,
-                        template_name=name,
-                        file_url=video_url,
-                        file_hvalue=hvalue_url,
-                        template_type="media",
-                        media_type="video"
-                    )
-    
 
     payload = {
         "name": name,
@@ -309,7 +230,7 @@ async def create_video_template(
         "components": [
             {
                 "type": "HEADER",
-                "format": "VIDEO",
+                "format": "IMAGE",
                 "example": {"header_handle": [hvalue_url]}
             },
             {
@@ -337,26 +258,15 @@ async def create_video_template(
     return response.json()
 
 
-@router.post("/sendWatsAppImage")
-async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
-    data = await req.json()
+def sendWatsAppImage(data):
+    #data = req.json()
     numbers_str = data.get("phone_numbers", "")
     template_name = data.get("template_name")
     # video_url = data.get("video_url")  # expect client to pass the video link
     # body_text = data.get("body_text", "Welcome to Whatsapp Api!!")
     # footer_text = data.get("footer_text", "Thanks")
 
-    #image_url="https://scontent.whatsapp.net/v/t61.29466-34/538401456_1453332132639720_6031891967003430650_n.mp4?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=UKYMs7EobOEQ7kNvwGB8UrX&_nc_oc=AdlJMTICIuScQzID-7Wd0hi6z7lshJ8MyMGp6JESPILUgsGG27fVWDiXu0J1ord92Bo&_nc_zt=28&_nc_ht=scontent.whatsapp.net&edm=AIJs65cEAAAA&_nc_gid=9mecET9dkeGvK54-GhgK6A&oh=01_Q5Aa2QGaN1eeEj8TkOEE94uP16NUCavPj9tcQ5_vGHgJSKY9eA&oe=68DFA10D"
-    
-    template = db.query(template_details).filter(template_details.template_name == template_name).first()
-    if not template or not template.file_url:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No file_url found for template {template_name}"
-        )
-
-    image_url = template.file_url
-    
+    video_url="https://scontent.whatsapp.net/v/t61.29466-34/538401456_1453332132639720_6031891967003430650_n.mp4?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=UKYMs7EobOEQ7kNvwGB8UrX&_nc_oc=AdlJMTICIuScQzID-7Wd0hi6z7lshJ8MyMGp6JESPILUgsGG27fVWDiXu0J1ord92Bo&_nc_zt=28&_nc_ht=scontent.whatsapp.net&edm=AIJs65cEAAAA&_nc_gid=9mecET9dkeGvK54-GhgK6A&oh=01_Q5Aa2QGaN1eeEj8TkOEE94uP16NUCavPj9tcQ5_vGHgJSKY9eA&oe=68DFA10D"
     if not numbers_str or not template_name:
         raise HTTPException(
             status_code=400,
@@ -394,7 +304,7 @@ async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
                     "parameters": [
                         {
                             "type": "image",
-                            "image": {"link": image_url}
+                            "image": {"link": video_url}
                         }
                     ]
                 }
@@ -408,135 +318,3 @@ async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
         return resp.json()
     except requests.HTTPError:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
-
-
-@router.post("/sendWatsAppVideo")
-async def sendWatsAppVideo(req: Request,db: Session = Depends(get_db)):
-    data = await req.json()
-    numbers_str = data.get("phone_numbers", "")
-    template_name = data.get("template_name")
-    # video_url = data.get("video_url")  # expect client to pass the video link
-    # body_text = data.get("body_text", "Welcome to Whatsapp Api!!")
-    # footer_text = data.get("footer_text", "Thanks")
-
-    #image_url="https://scontent.whatsapp.net/v/t61.29466-34/538401456_1453332132639720_6031891967003430650_n.mp4?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=UKYMs7EobOEQ7kNvwGB8UrX&_nc_oc=AdlJMTICIuScQzID-7Wd0hi6z7lshJ8MyMGp6JESPILUgsGG27fVWDiXu0J1ord92Bo&_nc_zt=28&_nc_ht=scontent.whatsapp.net&edm=AIJs65cEAAAA&_nc_gid=9mecET9dkeGvK54-GhgK6A&oh=01_Q5Aa2QGaN1eeEj8TkOEE94uP16NUCavPj9tcQ5_vGHgJSKY9eA&oe=68DFA10D"
-    
-    template = db.query(template_details).filter(template_details.template_name == template_name).first()
-    if not template or not template.file_url:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No file_url found for template {template_name}"
-        )
-
-    video_url = template.file_url
-    
-    if not numbers_str or not template_name:
-        raise HTTPException(
-            status_code=400,
-            detail="phone_numbers, template_name and video_url are required"
-        )
-
-    API_KEY = os.getenv("API_KEY")
-    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")
-    url = f"https://cloudapi.wbbox.in/api/v1.0/messages/send-template/{CHANNEL_NUMBER}"
-
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "apikey": f"{API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    # Clean and join the numbers into a single comma-separated string
-    cleaned_numbers = [re.sub(r"\D", "", n) for n in numbers_str.split(",")]
-    recipients = ",".join(filter(None, cleaned_numbers))
-
-    if not recipients:
-        raise HTTPException(status_code=400, detail="No valid phone numbers provided")
-
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": recipients,
-        "type": "template",
-        "template": {
-            "name": template_name,
-            "language": {"code": "en"},
-            "components": [
-                {
-                    "type": "header",
-                    "parameters": [
-                        {
-                            "type": "video",
-                            "video": {"link": video_url}
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-
-    try:
-        resp = requests.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.HTTPError:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    
-
-def save_template_details(
-    db: Session,
-    template_name: str,
-    file_url: str = None,
-    file_hvalue: str = None,
-    template_type: str = None,
-    media_type: str = None
-):
-    """
-    Insert or update template details in the database.
-    """
-    try:
-        template = db.query(template_details).filter(template_details.template_name == template_name).first()
-
-        if template:
-            # Update existing
-            template.file_url = file_url
-            template.file_hvalue = file_hvalue
-            template.template_type = template_type
-            template.media_type = media_type
-        else:
-            # Insert new
-            template = template_details(
-                template_name=template_name,
-                file_url=file_url,
-                file_hvalue=file_hvalue,
-                template_type=template_type,
-                media_type=media_type,
-            )
-            db.add(template)
-
-        db.commit()
-        return True
-    except Exception as e:
-        db.rollback()  # rollback on error
-        print(f"Error saving template details: {e}")
-        return False
-
-
-@router.get("/{template_name}/details")
-async def get_template_details(template_name: str, db: Session = Depends(get_db)):
-    template = (
-        db.query(template_details)
-        .filter(template_details.template_name == template_name)
-        .first()
-    )
-
-    print("template----------- ",template)
-
-    if not template:
-        raise HTTPException(status_code=404, detail="Template not found")
-
-    return {
-        "template_name": template.template_name,
-        "template_type": template.template_type,
-        "media_type": template.media_type,
-    }

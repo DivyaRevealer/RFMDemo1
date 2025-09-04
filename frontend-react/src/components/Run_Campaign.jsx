@@ -119,9 +119,6 @@ const RunCampaign = () => {
             key: t.id || t.name,
             id: Number(t.id) || 0,  
             name: t.name,
-          //   createdAt: t.created_at || t.createdAt,
-          //   modifiedAt: t.modified_at || t.modifiedAt,
-          //   templateName: t.template_name || t.templateName || t.name,
             templateType: t.template_type || t.templateType || t.category,
             templateCreateStatus:
              t.Status,
@@ -150,10 +147,31 @@ const RunCampaign = () => {
         numbers = data.phone_numbers || "";
       }
       
+      console.log("selectedTemplate-------- ",selectedTemplate)
       if (channels.includes("WhatsApp")) {
+        const templateRes = await fetch(`/api/campaign/templates/${selectedTemplate}/details`);
+        const templateData = await templateRes.json();
+        console.log("templateData------- ",templateData)
+
+        const templateType = templateData.template_type;       // e.g. "media" or "text"
+        const mediaType = templateData.media_type;    // e.g. "image" or "video"
+        //let endpoint = "/api/campaign/templates/sendWatsAppText"; // default
+        let endpoint = ""; // default
+        console.log("templateType--------------",templateType)
+        if (templateType === "media") {
+          if (mediaType === "image") {
+            endpoint = "/api/campaign/templates/sendWatsAppImage";
+          } else if (mediaType === "video") {
+            endpoint = "/api/campaign/templates/sendWatsAppVideo";
+          } 
+        }
+        else if(templateType === "text"){
+          endpoint = "/api/campaign/templates/sendWatsAppText";
+        }
+
         if (campaignDetails?.based_on === "upload") {
           //await fetch("/api/campaign/templates/sendWatsAppText", {
-            await fetch("/api/campaign/templates/sendWatsAppImage", {
+            await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -163,8 +181,7 @@ const RunCampaign = () => {
           });
         }
         else{
-          //await fetch("/api/campaign/templates/sendWatsAppText", {
-            await fetch("/api/campaign/templates/sendWatsAppImage", {
+          await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -463,7 +480,7 @@ const RunCampaign = () => {
                     }
                   >
                     {templates.map(t => (
-                      <Option key={t.id} value={t.name}>
+                      <Option key={t.name} value={t.name}>
                         {t.name}
                       </Option>
                     ))}
