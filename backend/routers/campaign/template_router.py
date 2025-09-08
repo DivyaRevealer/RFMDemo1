@@ -3,6 +3,7 @@ import re
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from database import get_db
 from utils.file_server import upload_image_to_api
 from utils.file_server import upload_video_to_api
@@ -102,10 +103,12 @@ async def list_templates():
 
 
 @router.post("/sendWatsAppText")
-async def sendWatsAppText(req: Request):
+async def sendWatsAppText(req: Request,db: Session = Depends(get_db)):
     data = await req.json()
-    numbers_str = data.get("phone_numbers", "")
+    #numbers_str = data.get("phone_numbers", "")
     template_name = data.get("template_name")
+    basedon=data.get("basedon_value")
+    campaign_id=data.get("campaign_id")
 
     # requestParams = await req.json()
     # #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
@@ -116,44 +119,55 @@ async def sendWatsAppText(req: Request):
     # url = f"https://cloudapi.wbbox.in/api/v1.0/send-template/{CHANNEL_NUMBER}"
     
    # headers = {"Authorization": f"Bearer {API_KEY}"}
+    if(basedon == "upload"):
+        numbers_str = data.get("phone_numbers", "")
+    else:
+        numbers_obj = get_eligible_customers(campaign_id, basedon, db)
+        numbers_str = numbers_obj["numbers"]   # extract the string
+
+    print("numbers_str---------------- ",numbers_str)
 
     if not numbers_str or not template_name:
         raise HTTPException(status_code=400, detail="phone_numbers and template_name are required")
-
-    API_KEY = os.getenv("API_KEY")
-    CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")
-    url = f"https://cloudapi.wbbox.in/api/v1.0/messages/send-template/{CHANNEL_NUMBER}"
-
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "apikey": "{API_KEY}",
-        "Content-Type": "application/json",
-    }
-
     
-     # Clean and join the numbers into a single comma-separated string
-    cleaned_numbers = [re.sub(r"\D", "", n) for n in numbers_str.split(",")]
-    recipients = ",".join(filter(None, cleaned_numbers))
+    #numbers_str1=get_eligible_customers(campaign_id,basedon,db)
+    if numbers_str:
+        API_KEY = os.getenv("API_KEY")
+        CHANNEL_NUMBER = os.getenv("CHANNEL_NUMBER")
+        url = f"https://cloudapi.wbbox.in/api/v1.0/messages/send-template/{CHANNEL_NUMBER}"
 
-    if not recipients:
-        raise HTTPException(status_code=400, detail="No valid phone numbers provided")
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "apikey": "{API_KEY}",
+            "Content-Type": "application/json",
+        }
 
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": recipients,
-        "type": "template",
-        "template": {
-            "name": template_name,
-            "language": {"code": "en"},
-        },
-        "components": []
-    }
-    try:
-        resp = requests.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.HTTPError:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+        
+        # Clean and join the numbers into a single comma-separated string
+        cleaned_numbers = [re.sub(r"\D", "", n) for n in numbers_str.split(",")]
+        recipients = ",".join(filter(None, cleaned_numbers))
+
+        if not recipients:
+            raise HTTPException(status_code=400, detail="No valid phone numbers provided")
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": recipients,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": "en"},
+            },
+            "components": []
+        }
+        try:
+            resp = requests.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            return resp.json()
+        except requests.HTTPError:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text)
+    else:
+        return "No customer matched"
     
 @router.post("/create-text-template")
 async def create_text_template(req: Request,db: Session = Depends(get_db)):
@@ -340,8 +354,10 @@ async def create_video_template(
 @router.post("/sendWatsAppImage")
 async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
     data = await req.json()
-    numbers_str = data.get("phone_numbers", "")
+   # numbers_str = data.get("phone_numbers", "")
     template_name = data.get("template_name")
+    basedon=data.get("basedon_value")
+    campaign_id=data.get("campaign_id")
     # video_url = data.get("video_url")  # expect client to pass the video link
     # body_text = data.get("body_text", "Welcome to Whatsapp Api!!")
     # footer_text = data.get("footer_text", "Thanks")
@@ -356,6 +372,12 @@ async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
         )
 
     image_url = template.file_url
+
+    if(basedon == "upload"):
+        numbers_str = data.get("phone_numbers", "")
+    else:
+        numbers_obj = get_eligible_customers(campaign_id, basedon, db)
+        numbers_str = numbers_obj["numbers"]   # extract the string
     
     if not numbers_str or not template_name:
         raise HTTPException(
@@ -413,8 +435,10 @@ async def sendWatsAppImage(req: Request,db: Session = Depends(get_db)):
 @router.post("/sendWatsAppVideo")
 async def sendWatsAppVideo(req: Request,db: Session = Depends(get_db)):
     data = await req.json()
-    numbers_str = data.get("phone_numbers", "")
+#    numbers_str = data.get("phone_numbers", "")
     template_name = data.get("template_name")
+    basedon=data.get("basedon_value")
+    campaign_id=data.get("campaign_id")
     # video_url = data.get("video_url")  # expect client to pass the video link
     # body_text = data.get("body_text", "Welcome to Whatsapp Api!!")
     # footer_text = data.get("footer_text", "Thanks")
@@ -429,7 +453,12 @@ async def sendWatsAppVideo(req: Request,db: Session = Depends(get_db)):
         )
 
     video_url = template.file_url
-    
+    if(basedon == "upload"):
+        numbers_str = data.get("phone_numbers", "")
+    else:
+        numbers_obj = get_eligible_customers(campaign_id, basedon, db)
+        numbers_str = numbers_obj["numbers"]   # extract the string
+
     if not numbers_str or not template_name:
         raise HTTPException(
             status_code=400,
@@ -540,3 +569,53 @@ async def get_template_details(template_name: str, db: Session = Depends(get_db)
         "template_type": template.template_type,
         "media_type": template.media_type,
     }
+
+def get_eligible_customers(campaign_id: int, basedon:str,db: Session = Depends(get_db)):
+    print("campaign_id------ ",campaign_id)
+    sql = text("""
+        SELECT 
+            ca.CUST_MOBILENO
+        FROM campaigns c
+        JOIN crm_analysis ca 
+            ON 1=1
+        LEFT JOIN crm_sales cs 
+            ON cs.CUST_MOBILENO = ca.CUST_MOBILENO
+        WHERE 
+            c.id = :campaign_id
+            AND (
+                (
+                    c.rfm_segments IS NOT NULL 
+                    AND JSON_CONTAINS(c.rfm_segments, JSON_QUOTE(ca.SEGMENT_MAP), '$')
+                )
+                OR (
+                    (c.r_score IS NULL OR JSON_CONTAINS(c.r_score, JSON_ARRAY(ca.R_SCORE), '$'))
+                    AND (c.f_score IS NULL OR JSON_CONTAINS(c.f_score, JSON_ARRAY(ca.F_SCORE), '$'))
+                    AND (c.m_score IS NULL OR JSON_CONTAINS(c.m_score, JSON_ARRAY(ca.M_SCORE), '$'))
+                    AND (c.recency_min IS NULL OR c.recency_max IS NULL OR (ca.DAYS BETWEEN c.recency_min AND c.recency_max))
+                    AND (c.frequency_min IS NULL OR c.frequency_max IS NULL OR (ca.F_VALUE BETWEEN c.frequency_min AND c.frequency_max))
+                    AND (c.monetary_min IS NULL OR c.monetary_max IS NULL OR (ca.M_VALUE BETWEEN c.monetary_min AND c.monetary_max))
+                )
+            )
+            AND (c.branch IS NULL OR JSON_CONTAINS(c.branch, JSON_QUOTE(ca.LAST_IN_STORE_CODE), '$'))
+            AND (c.city IS NULL OR JSON_CONTAINS(c.city, JSON_QUOTE(ca.LAST_IN_STORE_CITY), '$'))
+            AND (c.state IS NULL OR JSON_CONTAINS(c.state, JSON_QUOTE(ca.LAST_IN_STORE_STATE), '$'))
+            AND (c.section IS NULL OR JSON_CONTAINS(c.section, JSON_QUOTE(cs.SECTION), '$'))
+            AND (c.product IS NULL OR JSON_CONTAINS(c.product, JSON_QUOTE(cs.PRODUCT), '$'))
+            AND (c.model IS NULL OR JSON_CONTAINS(c.model, JSON_QUOTE(cs.MODELNO), '$'))
+            AND (c.item IS NULL OR JSON_CONTAINS(c.item, JSON_QUOTE(cs.ITEM_DESCRIPTION), '$'))
+    """)
+
+    #result = db.execute(sql, {"campaign_id": campaign_id}).fetchall()
+    result = db.execute(sql, {"campaign_id": campaign_id}).fetchall()
+
+    if not result:
+        # raise HTTPException(status_code=404, detail="No eligible customers found")
+        numbers_str=""
+    else:
+    # format numbers with 91 prefix and comma separator
+        numbers = [f"91{row.CUST_MOBILENO}" for row in result if row.CUST_MOBILENO]
+        numbers_str = ",".join(numbers)
+        print("numbers_str--------------- ",numbers_str)
+    
+
+    return {"campaign_id": campaign_id, "numbers": numbers_str}

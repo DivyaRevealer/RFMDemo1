@@ -22,7 +22,6 @@ import {
   Form,
   Table,
   Modal,
-  Radio,
 } from "antd";
 import {
   PlusOutlined,
@@ -47,7 +46,7 @@ export default function TemplateCreation() {
   const [mediaFile, setMediaFile] = useState(null);
   const [gridView, setGridView] = useState(true);
   const [preview, setPreview] = useState(null);
-  const [previewText, setPreviewText] = useState("");
+  
   // filtered data before rendering table
   // const filteredTemplates = templates.filter(t =>
   //   t.name.toLowerCase().includes(searchText.toLowerCase())
@@ -258,13 +257,10 @@ export default function TemplateCreation() {
   ];
 const [currentPage, setCurrentPage] = useState(1);
 const [pageSize, setPageSize] = useState(15);
-const [headerText, setHeaderText] = useState("");
-const [bodyText, setBodyText] = useState("");
-const [footerText, setFooterText] = useState("");
 
 // Pagination slice
   const start = (currentPage - 1) * pageSize;
-  const pagedTemplates = filteredTemplates.slice(start, start + pageSize);
+  const pagedTemplates = templates.slice(start, start + pageSize);
 
   return (
 //   <div
@@ -643,7 +639,7 @@ const [footerText, setFooterText] = useState("");
         )}
       </Drawer>
 
-     {/* <Modal
+     <Modal
       open={open}
       title="Create Template"
       onCancel={hideModal}
@@ -666,7 +662,7 @@ const [footerText, setFooterText] = useState("");
         <Form.Item name="language" label="Language" rules={[{ required: true }]}>
           <Select>
             <Option value="en">English</Option>
-           
+            {/* <Option value="es">Spanish</Option> */}
           </Select>
         </Form.Item>
         <Form.Item name="category" label="Category" rules={[{ required: true }]}>
@@ -691,7 +687,7 @@ const [footerText, setFooterText] = useState("");
           </Select>
         </Form.Item>
 
-        
+        {/* If user selects Media → show Radio + Upload */}
         {templateType === "media" && (
           <Form.Item label="Media Options" required>
             <Radio.Group
@@ -726,320 +722,20 @@ const [footerText, setFooterText] = useState("");
           label="Body Text"
           rules={[{ required: true, message: "Please enter body text" }]}
         >
-          <Input
-            onChange={(e) => setPreviewText(e.target.value)}
-          />
+          <Input />
         </Form.Item>
-       
+        {/* <Form.Item
+          name="example"
+          label="Example Body Text"
+          rules={[{ required: true, message: "Please enter example text" }]}
+        >
+          <Input />
+        </Form.Item> */}
         <Form.Item name="footer" label="Footer Text">
           <Input />
         </Form.Item>
       </Form>
-    </Modal> */}
-
-       <Modal
-  open={open}
-  title="Create Template"
-   onCancel={hideModal}
-  // onOk={submit}
-  // okText="Submit"
-  footer={null}     // 👈 disable default footer
-  bodyStyle={{ background: "#f9f9f9", padding: "16px" }}
-  width={1100}           // ✅ make modal wider
-  maskClosable={false}
-  keyboard={false}
-    centered={false}           // 👈 disable vertical centering
-  style={{ top: 20 }}        // 👈 move modal 20px from top of screen
->
-  <Row gutter={24}>
-    {/* Left: Form */}
-    <Col span={14}>
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{ language: "en", category: "MARKETING" }}
-      >
-        {/* Row 1: Name + Language */}
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="name"
-              label="Template Name"
-              rules={[{ required: true, message: "Please enter name" }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="language" label="Language" rules={[{ required: true }]}>
-              <Select>
-                <Option value="en">English</Option>
-                <Option value="hi">Hindi</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        {/* Row 2: Category + Template Type */}
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="category" label="Category" rules={[{ required: true }]}>
-              <Select>
-                <Option value="MARKETING">Marketing</Option>
-                <Option value="UTILITY">Utility</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="templateType"
-              label="Template Type"
-              rules={[{ required: true, message: "Please select template type" }]}
-            >
-              <Select
-                value={templateType}
-                onChange={(val) => setTemplateType(val)}
-              >
-                <Option value="text">Text</Option>
-                <Option value="media">Media</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        {/* Media Options inline */}
-        {templateType === "media" && (
-          <Form.Item label="Media Type" required>
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <Radio.Group
-                onChange={(e) => setMediaType(e.target.value)}
-                value={mediaType}
-              >
-                <Radio value="image">Image</Radio>
-                <Radio value="video">Video</Radio>
-              </Radio.Group>
-              <div>
-                <input
-                  type="file"
-                  accept={mediaType === "image" ? "image/*" : "video/*"}
-                  onChange={handleFileChange}
-                />
-                <div style={{ fontSize: "12px" }}>
-                  Upload {mediaType} less than {mediaType === "image" ? "4MB" : "9MB"}
-                </div>
-              </div>
-            </div>
-          </Form.Item>
-        )}
-
-        {/* Header */}
-        <Form.Item name="header" label="Header Text">
-          <Input onChange={(e) => setHeaderText(e.target.value)} />
-        </Form.Item>
-
-        {/* Body */}
-        <Form.Item
-          name="body"
-          label="Body Text"
-          rules={[{ required: true, message: "Please enter body text" }]}
-        >
-          <Input.TextArea
-            rows={3}
-            onChange={(e) => setBodyText(e.target.value)}
-          />
-        </Form.Item>
-
-        {/* Footer */}
-        <Form.Item name="footer" label="Footer Text">
-          <Input onChange={(e) => setFooterText(e.target.value)} />
-        </Form.Item>
-          {/* Custom Submit/Cancel buttons directly under form */}
-        <div style={{ marginTop: 20, textAlign: "right" }}>
-          <Button style={{ marginRight: 8 }} onClick={hideModal}>
-            Cancel
-          </Button>
-          <Button type="primary" onClick={submit}>
-            Submit
-          </Button>
-        </div>
-      </Form>
-    </Col>
-
-    {/* Right: Preview */}
-    <Col span={10}  style={{
-    display: "flex",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",   // ✅ stick to top
-    marginTop: "-42px"          // ✅ nudge preview upward
-  }}>
-      <div
-        style={{
-          border: "2px solid #ccc",
-          borderRadius: "24px",
-          width: "100%",
-          height: "100%",
-          maxWidth: "280px",
-          margin: "0 auto",
-          background: "#f0f0f0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "16px",
-          
-          boxShadow: "0 6px 18px rgba(0,0,0,0.1)",
-        }}
-      >
-         {/* Phone Status Bar */}
-      <div
-        style={{
-          background: "#ededed",
-          height: "24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 8px",
-          fontSize: "12px",
-          color: "#000",
-        }}
-      >
-        <span>17:12</span>
-        <div style={{ display: "flex", gap: "186px" }}>
-          <span>📶</span>
-         
-          <span>🔋</span>
-        </div>
-      </div>
-
-        {/* <div
-          style={{
-            background: "#075E54",
-            color: "#fff",
-            width: "100%",
-            textAlign: "center",
-            borderRadius: "16px 16px 0 0",
-            padding: "8px",
-            fontWeight: "bold",
-              marginTop: "0",       
-          }}
-        >
-          WhatsApp Preview
-        </div> */}
-        {/* WhatsApp Header */}
-  <div
-    style={{
-      background: "#075E54",
-      color: "#fff",
-      width: "258px",
-      height: "48px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "0 12px",
-      borderRadius: "16px 16px 0 0",
-    }}
-  >
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <span style={{ fontSize: "18px", cursor: "pointer" }}>←</span>
-      <span
-        style={{
-          backgroundColor: "#25D366",
-          borderRadius: "50%",
-          width: "30px",
-          height: "24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "14px",
-          fontWeight: "bold",
-        }}
-      >
-        W
-      </span>
-      <span style={{ fontWeight: "bold" }}>
-        TEMPLATE PREVIEW <span style={{ color: "#34B7F1" }}>✔</span>
-      </span>
-    </div>
-    <span style={{ fontSize: "18px" }}>ℹ️</span>
-  </div>
-        <div
-          style={{
-            flex: 1,
-            width: "100%",
-            background: "#fff",
-            padding: "12px",
-            marginTop: "0",        // ✅ remove extra margin
-            borderRadius: "0 0 16px 16px",
-            overflowY: "auto",
-             boxSizing: "border-box" // ✅ keeps padding inside width
-          }}
-        >
-          {/* {mediaFile && (
-            <img
-              src={URL.createObjectURL(mediaFile)}
-              alt="header preview"
-              style={{ width: "100%", borderRadius: "8px", marginBottom: "8px" }}
-            />
-          )}
-          {headerText && !mediaFile && (
-            <div style={{ fontSize: "12px", color: "#999", marginBottom: "8px" }}>
-              {headerText}
-            </div>
-          )} */}
-          {/* Header Media or Text */}
-            {mediaFile && (
-              <div style={{ marginBottom: "8px", width: "100%" }}>
-                {mediaType === "image" ? (
-                  <img
-                    src={URL.createObjectURL(mediaFile)}
-                    alt="header preview"
-                    style={{ width: "100%", borderRadius: "8px" }}
-                  />
-                ) : (
-                  <video
-                    src={URL.createObjectURL(mediaFile)}
-                    controls
-                    style={{ width: "100%", borderRadius: "8px" }}
-                  />
-                )}
-                {headerText && (
-                  <div style={{ fontSize: "14px", color: "#444", marginTop: "4px" }}>
-                    {headerText}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!mediaFile && headerText && (
-              <div style={{ fontSize: "14px", color: "#999", marginBottom: "8px" }}>
-                {headerText}
-              </div>
-            )}
-          {bodyText && (
-            <div
-              style={{
-                background: "#dcf8c6",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                maxWidth: "80%",
-                fontSize: "14px",
-                lineHeight: "1.4",
-                marginBottom: "6px",
-              }}
-            >
-              {bodyText}
-            </div>
-          )}
-          {footerText && (
-            <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>
-              {footerText}
-            </div>
-          )}
-        </div>
-      </div>
-    </Col>
-  </Row>
-</Modal>
-
+    </Modal>
     </div>
 
 );

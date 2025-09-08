@@ -141,12 +141,16 @@ const RunCampaign = () => {
     try {
 
       let numbers = whatsappNumbers;
+      let basedon_value=campaignDetails?.based_on;
+      let campaign_id=campaignDetails?.id;
+      console.log("basedon_value----- ",campaignDetails?.based_on)
+      console.log("campaign_id----- ",campaign_id)
       if (campaignDetails?.based_on === "upload") {
         const res = await fetch(`/api/campaign/${selectedCampaign}/upload/numbers`);
         const data = await res.json();
         numbers = data.phone_numbers || "";
       }
-      
+     
       console.log("selectedTemplate-------- ",selectedTemplate)
       if (channels.includes("WhatsApp")) {
         const templateRes = await fetch(`/api/campaign/templates/${selectedTemplate}/details`);
@@ -167,29 +171,51 @@ const RunCampaign = () => {
         }
         else if(templateType === "text"){
           endpoint = "/api/campaign/templates/sendWatsAppText";
+          console.log("endpoint------ ",endpoint)
         }
 
         if (campaignDetails?.based_on === "upload") {
           //await fetch("/api/campaign/templates/sendWatsAppText", {
-            await fetch(endpoint, {
+            const response=await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               phone_numbers: numbers,
               template_name: selectedTemplate,
+              basedon_value:basedon_value,
+              campaign_id:campaign_id,
             }),
           });
+          const resJson = await response.json();
+          console.log("Broadcast API Response:", resJson);
+          if(resJson.success)
+            alert("Broadcast is successfull!!")
+          else
+            alert("Broadcast Failed!!")
         }
         else{
-          await fetch(endpoint, {
+          console.log("isnide----- ",campaign_id)
+          const response=await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               phone_numbers: whatsappNumbers,
               template_name: selectedTemplate,
+              basedon_value: basedon_value,
+              campaign_id:campaign_id,
             }),
           });
+          const resJson = await response.json();
+          console.log("Broadcast API Response:", resJson);
+          if(resJson.success)
+            alert("Broadcast is successfull!!")
+          else
+            alert("Broadcast Failed!!")
       }
+      // const resJson = await response.json(); // 👈 catch response here
+      // console.log("Broadcast API Response:", resJson);
+
+     
       }
       const timer = setInterval(() => {
         setProgress((p) => {
@@ -465,7 +491,7 @@ const RunCampaign = () => {
                     value={offerText}
                     onChange={(e) => setOfferText(e.target.value)}
                   /> */}
-                  <div style={{ width: "40%" }}>
+                  <div style={{ width: "80%" }}>
                   <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Template Name</Title>
                   <Select
                     showSearch  
@@ -496,7 +522,7 @@ const RunCampaign = () => {
                         <div style={{ width: "100px"}}>
                           <Checkbox value="WhatsApp">WhatsApp</Checkbox>
                         </div>
-                        {channels.includes("WhatsApp") && campaignDetails?.based_on !== "upload" && (
+                        {/* {channels.includes("WhatsApp") && campaignDetails?.based_on !== "upload" && (
                           <textarea
                             placeholder="Enter WhatsApp numbers separated by commas"
                             value={whatsappNumbers}
@@ -508,9 +534,9 @@ const RunCampaign = () => {
                             
                           />
                         
-                        )}
+                        )} */}
                       </div>
-                      <br />
+                      
                       {/* SMS row */}
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: "100px" }}>
@@ -529,7 +555,7 @@ const RunCampaign = () => {
                           />
                         )}
                       </div>
-                      <br />
+                     
                       {/* Email row */}
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: "100px" }}>

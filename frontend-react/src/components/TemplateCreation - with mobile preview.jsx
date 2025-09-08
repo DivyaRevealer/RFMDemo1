@@ -878,7 +878,7 @@ const [footerText, setFooterText] = useState("");
           borderRadius: "24px",
           width: "100%",
           height: "100%",
-          maxWidth: "280px",
+          maxWidth: "320px",
           margin: "0 auto",
           background: "#f0f0f0",
           display: "flex",
@@ -889,28 +889,8 @@ const [footerText, setFooterText] = useState("");
           boxShadow: "0 6px 18px rgba(0,0,0,0.1)",
         }}
       >
-         {/* Phone Status Bar */}
-      <div
-        style={{
-          background: "#ededed",
-          height: "24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 8px",
-          fontSize: "12px",
-          color: "#000",
-        }}
-      >
-        <span>17:12</span>
-        <div style={{ display: "flex", gap: "186px" }}>
-          <span>📶</span>
-         
-          <span>🔋</span>
-        </div>
-      </div>
-
-        {/* <div
+        
+        <div
           style={{
             background: "#075E54",
             color: "#fff",
@@ -923,44 +903,7 @@ const [footerText, setFooterText] = useState("");
           }}
         >
           WhatsApp Preview
-        </div> */}
-        {/* WhatsApp Header */}
-  <div
-    style={{
-      background: "#075E54",
-      color: "#fff",
-      width: "258px",
-      height: "48px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "0 12px",
-      borderRadius: "16px 16px 0 0",
-    }}
-  >
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <span style={{ fontSize: "18px", cursor: "pointer" }}>←</span>
-      <span
-        style={{
-          backgroundColor: "#25D366",
-          borderRadius: "50%",
-          width: "30px",
-          height: "24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "14px",
-          fontWeight: "bold",
-        }}
-      >
-        W
-      </span>
-      <span style={{ fontWeight: "bold" }}>
-        TEMPLATE PREVIEW <span style={{ color: "#34B7F1" }}>✔</span>
-      </span>
-    </div>
-    <span style={{ fontSize: "18px" }}>ℹ️</span>
-  </div>
+        </div>
         <div
           style={{
             flex: 1,
