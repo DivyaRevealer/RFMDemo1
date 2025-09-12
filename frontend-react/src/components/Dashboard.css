@@ -352,3 +352,14 @@
   font-weight: bold;
   color: #fff;
 }
+
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-item label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}

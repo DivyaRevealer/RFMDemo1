@@ -9,6 +9,7 @@ class Campaign(Base):
     start_date       = Column(Date,   nullable=False)
     end_date         = Column(Date,   nullable=False)
     based_on         = Column(String(100), nullable=False)
+    rfm_mode          = Column(String(45))
     recency_op       = Column(JSON)
     recency_min      = Column(Integer)
     recency_max      = Column(Integer)

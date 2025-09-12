@@ -20,6 +20,7 @@ class CampaignBase(BaseModel):
     f_score:          Optional[List[int]]= None
     m_score:          Optional[List[int]]= None
     rfm_segments:     Optional[List[str]] = None
+    rfm_mode:         Optional[str]= None
     branch:           Optional[List[str]]= None
     city:             Optional[List[str]]= None
     state:            Optional[List[str]]= None
@@ -103,6 +104,7 @@ class CampaignRunDetails(BaseModel):
     anniversary_start: Optional[date] = None
     anniversary_end: Optional[date] = None
     purchase_type: Optional[str] = None
+    rfm_mode: Optional[str] = None
     purchase_brand: Optional[Any] = None
     section: Optional[Any] = None
     product: Optional[Any] = None

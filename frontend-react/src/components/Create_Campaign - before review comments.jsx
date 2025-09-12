@@ -2,7 +2,7 @@ import { message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 //import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio } from 'antd';
-import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload, Space ,Divider,Switch  } from 'antd';
+import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload, Space ,Divider } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useSearchParams } from 'react-router-dom';
@@ -113,26 +113,15 @@ export default function Create_Campaign() {
       // anniversaryRange: toRange(data.anniversary_start, data.anniversary_end),
       birthdayRange:    toRange(stripQuotes(data.birthday_start),    stripQuotes(data.birthday_end)),
       anniversaryRange: toRange(stripQuotes(data.anniversary_start), stripQuotes(data.anniversary_end)),
-     // purchaseType:  stripQuotes(data.purchase_type),
-     
+      purchaseType:  stripQuotes(data.purchase_type),
       purchaseBrand: parseArr(data.purchase_brand),
       section:       parseArr(data.section),
       product:       parseArr(data.product),
       model:         parseArr(data.model),
       item:          parseArr(data.item),
-      rfmMode: {
-      customized: data.rfm_mode === 'customized',
-      segmented: data.rfm_mode === 'segmented'
-    },
-    purchaseType: {
-      anyPurchase: data.purchase_type === 'any',
-      recentPurchase: data.purchase_type === 'recent'
-    },
 
       valueThreshold: data.value_threshold,
     });
-    
-  
     //alert(data.based_on)
   }).catch(() => message.error('Failed to load campaign'));
 }, [campaignId, form /*, optionsLoaded*/]);
@@ -190,10 +179,7 @@ export default function Create_Campaign() {
 
 
     if (values.basedOn !== 'upload') {
-      alert(values.rfmMode)
-      
       Object.assign(payload, {
-        
         based_on:   values.basedOn,
         recency_op:  values.recencyOp,
         recency_min: values.recencyMin,
@@ -226,7 +212,7 @@ export default function Create_Campaign() {
         anniversary_start:  values.anniversaryRange?.[0]?.format('YYYY-MM-DD'),
         anniversary_end:    values.anniversaryRange?.[1]?.format('YYYY-MM-DD'),
 
-       // purchase_type:  values.purchaseType,
+        purchase_type:  values.purchaseType,
         purchase_brand: values.purchaseBrand,
         section:        values.section,
         product:        values.product,
@@ -235,22 +221,6 @@ export default function Create_Campaign() {
 
         value_threshold: values.valueThreshold,
       });
-
-      if (values.purchaseType?.anyPurchase) {
-        payload.purchase_type = 'any';
-      }
-      if (values.purchaseType?.recentPurchase) {
-        payload.purchase_type = 'recent';
-      }
-      console.log("-----------------",values.rfmMode)
-      if (values.rfmMode?.customized) {
-        alert("inside")
-        payload.rfm_mode = 'customized';
-      }
-      if (values.rfmMode?.segmented) {
-        payload.rfm_mode = 'segmented';
-      }
-      
     } else {
       // minimal required fields for upload mode
       Object.assign(payload, {
@@ -275,8 +245,6 @@ export default function Create_Campaign() {
     //   payload.model = [];
     //   payload.item = [];
     // }
-
-    console.log("----------------- ",payload)
 
     try {
       let resp;
@@ -595,32 +563,22 @@ export default function Create_Campaign() {
         <Card title="RFM Mode" style={{ marginTop: 5 }}>
           <Row gutter={16} style={{ marginTop: 8 }}>
             <Col span={24}>
-              <Form.Item  style={{ marginBottom: 8 }}>
-                <Space>
-                  <Form.Item name={['rfmMode', 'customized']} valuePropName="checked" noStyle>
-                    <Switch />
-                  </Form.Item>
-                  <span>RFM Customized</span>
-
-                  <Form.Item name={['rfmMode', 'segmented']} valuePropName="checked" noStyle>
-                    <Switch />
-                  </Form.Item>
-                  <span>RFM Segmented</span>
-                </Space>
+              <Form.Item name="rfmMode" initialValue="customized" style={{ marginBottom: 8 }}>
+                <Radio.Group>
+                  <Radio value="customized">RFM Customized</Radio>
+                  <Radio value="segmented">RFM Segmented</Radio>
+                  
+                </Radio.Group>
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item noStyle shouldUpdate={(prev, cur) => prev.rfmMode !== cur.rfmMode}>
             {({ getFieldValue }) => {
-              // const mode = getFieldValue('rfmMode') || 'customized';
-              const rfmMode = getFieldValue('rfmMode') || {};
-              const isCustomized = rfmMode.customized === true;
-              const isSegmented = rfmMode.segmented === true;
-
+              const mode = getFieldValue('rfmMode') || 'customized';
               return (
                 <>
-                  {isCustomized  && (
+                  {mode === 'customized' && (
                     <Card style={{ marginTop: 5 }}>
                       <Row gutter={16}>
                         {/* Recency */}
@@ -761,7 +719,7 @@ export default function Create_Campaign() {
                     </Card>
                   )}
 
-                  {isSegmented && (
+                  {mode === 'segmented' && (
                     <Card title="RFM Segmented" style={{ marginTop: 5 }}>
                       <Form.Item
                         name="rfmSegment"
@@ -806,18 +764,16 @@ export default function Create_Campaign() {
                   <Form.Item
                     name="purchaseType"
                     label="Purchase Type"
+                    rules={
+                      watchBasedOn !== 'upload'
+                        ? [{ required: true, message: 'Select purchase type' }]
+                        : []
+                    }
                   >
-                     <Space>
-                        <span>Any Purchase</span>
-                        <Form.Item name={['purchaseType', 'anyPurchase']} valuePropName="checked" noStyle>
-                          <Switch disabled={watchBasedOn === 'upload'} />
-                        </Form.Item>
-
-                        <span>Recent Purchase</span>
-                        <Form.Item name={['purchaseType', 'recentPurchase']} valuePropName="checked" noStyle>
-                          <Switch disabled={watchBasedOn === 'upload'} />
-                        </Form.Item>
-                      </Space>
+                    <Radio.Group disabled={watchBasedOn  === 'upload'}>
+                      <Radio value="any">Any Purchase</Radio>
+                      <Radio value="recent">Recent Purchase</Radio>
+                    </Radio.Group>
                   </Form.Item>
                 );
               }}

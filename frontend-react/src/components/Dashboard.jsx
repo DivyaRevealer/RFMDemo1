@@ -46,12 +46,32 @@ import { HomeOutlined, BarChartOutlined, CalendarOutlined } from '@ant-design/ic
 //   '#1E90FF'  // darker blue
 // ];
 
+// const COLORS = [
+//   '#00aaaa', // main tile blue
+//   '#00b6b6', // accent cyan
+//   '#39AAAA', // lighter blue
+//   '#19e5e6', // light cyan
+//   '#009292'  // darker blue
+// ];
+
+
+
 const COLORS = [
-  '#00aaaa', // main tile blue
-  '#00b6b6', // accent cyan
-  '#39AAAA', // lighter blue
-  '#19e5e6', // light cyan
-  '#009292'  // darker blue
+  '#536d8e', // main tile blue
+  '#c8a036', // accent cyan
+  '#205166', // lighter blue
+  '#914545ff', // light cyan
+  '#009292',  // darker blue
+  '#583f74c0'
+];
+
+const GRADIENTS = [
+{ id: "grad1", start: "#536d8e", end: "#914545" },
+{ id: "grad2", start: "#c8a036", end: "#ffdb70" },
+{ id: "grad3", start: "#205166", end: "#009292" },
+{ id: "grad4", start: "#583f74c0", end: "#8e6ccf" },
+{ id: "grad5", start: "#d84a4aff", end: "#ffb199" },
+{ id: "grad6", start: "#1fa2ff", end: "#12d8fa" }
 ];
 
 // Sample Data
@@ -368,18 +388,24 @@ export default function Dashboard() {
     <div className="rfm-dashboard">
       {/* Filters */}
       <div className="filters">
+         <div className="filter-item">
         {/* <RangePicker  value={dateRange}   onChange={(dates) => setDateRange(dates)} /> */}
+        <label>Date Range:</label>
         <RangePicker
            value={dateRange}
            onChange={(dates) =>
              // when user clears, `dates` is null → reset to [null,null]
              setDateRange(dates ?? [null, null])
            }
+          
          />
+         </div>
         {/* <Select placeholder="Customer Mobile No" className="filter-select">
           <Option value="all">All</Option>
            {phones.map(phone => (
             <Option key={phone} value={phone}>{phone}</Option> */}
+           <div className="filter-item">
+              <label>Customer Mobile No:</label>
              <Select
           placeholder="Customer Mobile No"
           className="filter-select"
@@ -393,10 +419,13 @@ export default function Dashboard() {
             </Option>
           ))}
         </Select>
+        </div>
         {/* <Select placeholder="Customer Name" className="filter-select">
           <Option value="all">All</Option>
            {names.map(name => (
             <Option key={name} value={name}>{name}</Option> */}
+          <div className="filter-item">
+            <label>Customer Name:</label>
            <Select
           placeholder="Customer Name"
           className="filter-select"
@@ -410,10 +439,13 @@ export default function Dashboard() {
             </Option>
           ))}
         </Select>
+        </div>
         {/* <Select placeholder="R Value Bucket" className="filter-select">
           <Option value="all">All</Option>
           {rValues.sort().map(r => (
             <Option key={r} value={r}>{r}</Option> */}
+          <div className="filter-item">
+           <label>R Value Bucket:</label>
           <Select
           placeholder="R Value Bucket"
           className="filter-select"
@@ -427,10 +459,13 @@ export default function Dashboard() {
             </Option>
           ))}
         </Select>
+        </div>
         {/* <Select placeholder="F Value Bucket" className="filter-select">
           <Option value="all">All</Option>
            {fValues.sort().map(f => (
             <Option key={f} value={f}>{f}</Option> */}
+          <div className="filter-item">
+            <label>F Value Bucket:</label>
           <Select
           placeholder="F Value Bucket"
           className="filter-select"
@@ -444,10 +479,13 @@ export default function Dashboard() {
             </Option>
           ))}
         </Select>
+        </div>
         {/* <Select placeholder="M Value Bucket" className="filter-select">
           <Option value="all">All</Option>
           {mValues.sort().map(m => (
             <Option key={m} value={m}>{m}</Option> */}
+          <div className="filter-item">
+            <label>M Value Bucket:</label>
            <Select
           placeholder="M Value Bucket"
           className="filter-select"
@@ -461,6 +499,7 @@ export default function Dashboard() {
             </Option>
           ))}
         </Select>
+        </div>
         {/* <Button type="primary">Apply Filter</Button> */}
          <Button type="primary" onClick={applyFilters}>
           Apply Filter
@@ -502,14 +541,14 @@ export default function Dashboard() {
         <div className="chart-container">
           <h4>Total Customer by R Score</h4>
           <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+            {/* <PieChart>
               <Pie data={pieDataR} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false} >
                 {pieDataR.map((entry, index) => (
-                  // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                 
                   <Cell key={`cell-r-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
+              
               <Legend
                layout="vertical"
                align="right"
@@ -525,20 +564,50 @@ export default function Dashboard() {
                }))}
              />
               <Tooltip />
-            </PieChart>
+            </PieChart> */}
+            <PieChart>
+                <defs>
+                {GRADIENTS.map((g) => (
+                <linearGradient id={g.id} key={g.id} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={g.start} />
+                <stop offset="100%" stopColor={g.end} />
+                </linearGradient>
+                ))}
+                </defs>
+                <Pie data={pieDataR} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label>
+                {pieDataR.map((entry, index) => (
+                <Cell key={`cell-r-${index}`} fill={`url(#grad${(index % GRADIENTS.length) + 1})`} />
+                ))}
+                </Pie>
+                <Legend
+               layout="vertical"
+               align="right"
+               verticalAlign="middle"
+               iconSize={8}
+               wrapperStyle={{ fontSize: '12px',fontWeight: 'bold'  }} 
+               itemStyle={{ fontSize: '12px', lineHeight: '16px' ,fontWeight: 'bold' }} // each item
+               payload={pieDataR.map((entry, idx) => ({
+                 value: entry.name,
+                 type: 'square',
+                 id:    entry.name,
+                
+               }))}
+             />
+                <Tooltip />
+                </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">
           <h4>Total Customer by F Score</h4>
           <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+            {/* <PieChart>
               <Pie data={pieDataF} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false} >
                 {pieDataF.map((entry, index) => (
-                  // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  
                    <Cell key={`cell-f-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
+              
                <Legend
                layout="vertical"
                align="right"
@@ -554,20 +623,50 @@ export default function Dashboard() {
                }))}
              />
               <Tooltip />
-            </PieChart>
+            </PieChart> */}
+            <PieChart>
+              <defs>
+              {GRADIENTS.map((g) => (
+              <linearGradient id={`grad-f-${g.id}`} key={`grad-f-${g.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={g.start} />
+              <stop offset="100%" stopColor={g.end} />
+              </linearGradient>
+              ))}
+              </defs>
+              <Pie data={pieDataF} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label>
+              {pieDataF.map((entry, index) => (
+              <Cell key={`cell-f-${index}`} fill={`url(#grad${(index % GRADIENTS.length) + 1})`} />
+              ))}
+              </Pie>
+                <Legend
+               layout="vertical"
+               align="right"
+               verticalAlign="middle"
+               iconSize={8}
+               wrapperStyle={{ fontSize: '12px',fontWeight: 'bold'  }} 
+               itemStyle={{ fontSize: '12px', lineHeight: '16px',fontWeight: 'bold' }} // each item
+               payload={pieDataF.map((entry, idx) => ({
+                 value: entry.name,
+                 type: 'square',
+                 id:    entry.name,
+                
+               }))}
+             />
+              <Tooltip />
+              </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">
           <h4>Total Customer by M Score</h4>
           <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+            {/* <PieChart>
               <Pie data={pieDataM} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label labelLine={false}>
                 {pieDataM.map((entry, index) => (
-                  // <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                 
                    <Cell key={`cell-m-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} /> */}
+              
                <Legend
                layout="vertical"
                align="right"
@@ -583,7 +682,23 @@ export default function Dashboard() {
                }))}
              />
               <Tooltip />
-            </PieChart>
+            </PieChart> */}
+            <PieChart>
+              <defs>
+              {GRADIENTS.map((g) => (
+              <linearGradient id={`grad-m-${g.id}`} key={`grad-m-${g.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={g.start} />
+              <stop offset="100%" stopColor={g.end} />
+              </linearGradient>
+              ))}
+              </defs>
+              <Pie data={pieDataM} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label>
+              {pieDataM.map((entry, index) => (
+              <Cell key={`cell-m-${index}`} fill={`url(#grad${(index % GRADIENTS.length) + 1})`} />
+              ))}
+              </Pie>
+              <Tooltip />
+              </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="chart-container">

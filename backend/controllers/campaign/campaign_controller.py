@@ -138,7 +138,7 @@ def get_campaign_options(db: Session) -> CampaignOptions:
         if any([r.brand, r.section, r.product, r.model, r.item])
     ]
    
-    print("brand_hierarchy------------",brand_hierarchy)
+   # print("brand_hierarchy------------",brand_hierarchy)
     return CampaignOptions(
       r_scores=r_scores,
       f_scores=f_scores,
@@ -159,8 +159,9 @@ def get_campaign_options(db: Session) -> CampaignOptions:
     )
 
 def create_campaign(db: Session, data: CampaignCreate) -> Campaign:
-    print("inside create campaign-----------------")
+   
     db_obj = Campaign(**data.dict())
+    print("inside create campaign-----------------",**data.dict())
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
