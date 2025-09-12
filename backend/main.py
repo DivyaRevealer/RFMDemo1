@@ -45,6 +45,7 @@ app.include_router(filters.router, prefix="/api")
 app.include_router(campaign_router, prefix="/api")
 app.include_router(templates_router, prefix="/api")
 
+
 @app.get("/")
 def root():
     return {"message": "RFM Tool API with Authentication"}

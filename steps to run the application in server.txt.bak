@@ -11,8 +11,3 @@ uvicorn main:app --host 0.0.0.0 --port 4001
 
 copy the frontend build inside nginx folder
 go to the folder where nginx is there. then start .\nginx.exe 
-
-
-How to generate build from local
-
-python -m build

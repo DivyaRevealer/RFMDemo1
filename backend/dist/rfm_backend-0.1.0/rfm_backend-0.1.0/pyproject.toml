@@ -16,4 +16,12 @@ py-modules = ["main", "database"]
 [tool.setuptools.packages.find]
 where = ["."]
 # Don't use wildcards - be explicit about package names
-include = ["app", "auth", "controllers", "models", "routers", "schemas"]
+include = [
+    "app*",
+    "auth*",
+    "controllers*",
+    "models*",
+    "routers*",
+    "schemas*",
+    "utils*",
+]

@@ -1,5 +1,4 @@
 from datetime import date
-import io
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy import text
@@ -148,7 +147,7 @@ def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 
-@router.get("", response_model=list[CampaignOut])
+@router.get("/", response_model=list[CampaignOut])
 def read_campaigns(db: Session = Depends(get_db)):
     return list_campaigns(db)
 
@@ -186,45 +185,13 @@ def upload_campaign_contacts(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    # try:
-    #     df = pd.read_excel(file.file)
-    #     contacts = df.to_dict(orient="records")
-    #     save_upload_contacts(db, campaign_id, contacts)
-    #     return {"rows": len(contacts)}
-    # except Exception as e:
-    #     raise HTTPException(status_code=400, detail=str(e))
-
     try:
-        # ✅ Read file into memory safely
-        contents = file.file.read()
-        buffer = io.BytesIO(contents)
-
-        # ✅ Decide Excel or CSV
-        if file.filename.endswith(".csv"):
-            df = pd.read_csv(buffer)
-        else:
-            df = pd.read_excel(buffer)
-
-        # ✅ Normalize column names
-        df.columns = [c.strip().lower() for c in df.columns]
-
-        required_cols = {"name", "mobile_no", "email_id"}
-        if not required_cols.issubset(set(df.columns)):
-            raise HTTPException(
-                400,
-                f"Invalid template. Required columns: {required_cols}"
-            )
-
-        # ✅ Convert DataFrame rows to dict
+        df = pd.read_excel(file.file)
         contacts = df.to_dict(orient="records")
-
-        # ✅ Save using existing helper
         save_upload_contacts(db, campaign_id, contacts)
-
-        return {"message": "Contacts uploaded successfully", "count": len(contacts)}
-
+        return {"rows": len(contacts)}
     except Exception as e:
-        raise HTTPException(500, f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/run/list", response_model=List[CampaignListOut])
 def list_campaigns_for_run(
@@ -346,17 +313,32 @@ def download_campaign_numbers(campaign_id: int, db: Session = Depends(get_db)):
 
 @router.post("/download-numbers")
 def download_numbers_route(filters: NumberDownloadFilters, db: Session = Depends(get_db)):
-
+    # numbers = get_mobile_numbers(db, filters)
+    # buffer = StringIO()
+    # writer = csv.writer(buffer)
+    # for n in numbers:
+    #     writer.writerow([n])
+    # buffer.seek(0)
+    # headers = {"Content-Disposition": "attachment; filename=numbers.csv"}
+    # return StreamingResponse(buffer, media_type="text/csv", headers=headers)
+    
+     # Stream rows directly from DB (no .all(), no list)
     rows = get_mobile_numbers(db, filters)
-  
+    # rows = db.execute(
+    #     text("""
+    #         SELECT CUST_MOBILENO 
+    #         FROM crm_analysis_tcm
+    #         WHERE LAST_IN_STORE_CITY = :city
+    #     """),
+    #     {"city": "COIMBATORE"}
+    # )
 
     def iter_csv():
         buffer = StringIO(newline="")
         writer = csv.writer(buffer)
 
         # header
-       # writer.writerow(["mobile_no", "name", "segment"])
-        writer.writerow(rows.keys())
+        writer.writerow(["mobile_no", "name", "segment"])
         yield buffer.getvalue()
         buffer.seek(0)
         buffer.truncate(0)
@@ -364,8 +346,7 @@ def download_numbers_route(filters: NumberDownloadFilters, db: Session = Depends
         # rows in batches
         batch = []
         for r in rows:
-            #batch.append([r[0], r[1], r[2]])
-            batch.append(list(r))  # row as list of values
+            batch.append([r[0], r[1], r[2]])
             if len(batch) >= 1000:  # flush every 1000 rows
                 writer.writerows(batch)
                 yield buffer.getvalue()
@@ -385,4 +366,20 @@ def download_numbers_route(filters: NumberDownloadFilters, db: Session = Depends
         headers=headers
     )
 
-    
+    # buffer = StringIO()
+    # writer = csv.writer(buffer)
+    # # Header
+    # writer.writerow(["mobile_no"])
+    # yield buffer.getvalue()
+    # buffer.seek(0)
+    # buffer.truncate(0)
+
+    # # Rows
+    # for r in rows:
+    #     writer.writerow([r[0]])
+    #     yield buffer.getvalue()
+    #     buffer.seek(0)
+    #     buffer.truncate(0)
+
+    # headers = {"Content-Disposition": "attachment; filename=numbers.csv"}
+    # return StreamingResponse(buffer, media_type="text/csv", headers=headers)

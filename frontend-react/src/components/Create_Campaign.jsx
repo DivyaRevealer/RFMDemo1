@@ -298,6 +298,22 @@ export default function Create_Campaign() {
 
   };
 
+  const handleDownloadNumbers = async () => {
+    try {
+      const values = form.getFieldsValue();
+      const res = await axios.post('/api/campaign/download-numbers', values, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'numbers.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      message.error('Failed to download numbers');
+    }
+  };
+
   // ---------- dependent geography ----------
   const watchBranch = Form.useWatch('branch', form) || [];
   const watchCity   = Form.useWatch('city', form)   || [];
@@ -460,6 +476,7 @@ export default function Create_Campaign() {
   return (
     <div style={{ fontWeight: 'bold', padding: 5, background: '#f0f2f5', minHeight: '50vh' }}>
       <Title level={2}>{isEditing ? 'Update Campaign' : 'Create Campaign'}</Title>
+      
       <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 960, margin: '0 auto' }}>
 
         <Card title="Campaign Details" style={{ marginTop: 15 }}>
@@ -933,9 +950,17 @@ export default function Create_Campaign() {
         )}
 
         <Form.Item style={{ textAlign: 'center', marginTop: 5 }}>
-          <Button type="primary" htmlType="submit" size="large">
+          {/* <Button type="primary" htmlType="submit" size="large">
             {isEditing ? 'Update Campaign' : 'Create Campaign'}
-          </Button>
+          </Button> */}
+           <Space>
+            <Button onClick={handleDownloadNumbers} size="large" htmlType="button">
+              Download Numbers
+            </Button>
+            <Button type="primary" htmlType="submit" size="large">
+              {isEditing ? 'Update Campaign' : 'Create Campaign'}
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
     </div>

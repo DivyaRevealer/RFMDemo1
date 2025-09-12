@@ -8,7 +8,8 @@ from schemas.filters import FilterOptions
 router = APIRouter(prefix="/filters", tags=["filters"])
 
 
-@router.get("/", response_model=FilterOptions)
+# @router.get("/", response_model=FilterOptions)
+@router.get("", response_model=FilterOptions)
 def get_filter_options(db: Session = Depends(get_db)) -> FilterOptions:
     """Return distinct field values used for dashboard filters."""
 

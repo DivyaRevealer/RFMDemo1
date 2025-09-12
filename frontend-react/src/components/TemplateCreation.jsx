@@ -83,9 +83,13 @@ export default function TemplateCreation() {
 
 
   const loadTemplates = () => {
+    const token = localStorage.getItem("token"); // wherever you store it after login
     api
       //.get('/getAlltemplates')
-      .get("/campaign/templates/getAlltemplates")
+      .get("/campaign/templates/getAlltemplates", {
+      headers: {
+        Authorization: `Bearer ${token}`,  // 👈 required
+      }})
       .then(res => {
         console.log("res.data.templates----- ",res)
         const list = (res.data.templates || res.data || []).map(t => ({
@@ -178,9 +182,14 @@ export default function TemplateCreation() {
             //     if (res.data.success==true) {
             //       console.log("Succesfull!!!!!!!!!!");
             //       syncTemplate(values.name)
-             api.post("/campaign/templates/create-text-template", payload)
+            const token = localStorage.getItem("token"); // or sessionStorage
+            //  api.post("/campaign/templates/create-text-template", payload)
+            api.post("/campaign/templates/create-text-template", payload, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
               .then(res => {
                 if (res.data.success === true) {
+                  alert(values.name)
                   syncTemplate(values.name);
                 }
 
@@ -200,13 +209,16 @@ export default function TemplateCreation() {
             formData.append("body", values.body);
             formData.append("footer", values.footer || "");
             formData.append("file", mediaFile);
+            const token = localStorage.getItem("token"); // or sessionStorage
             const endpoint =
               mediaType === "image"
                 ? "/campaign/templates/create-image-template"
                 : "/campaign/templates/create-video-template";
             api
               .post(endpoint, formData, {
-                headers: { "Content-Type": "multipart/form-data" }
+                headers: { 
+                  Authorization: `Bearer ${token}`,   // 👈 added here
+                  "Content-Type": "multipart/form-data" }
               })
               .then(res => {
                 if (res.data.success === true) {
@@ -221,9 +233,13 @@ export default function TemplateCreation() {
     };
 
   const syncTemplate = (templateName) => {
+    const token = localStorage.getItem("token"); // or sessionStorage
     api
       //.get('/getAlltemplates')
-      .post("/campaign/templates/sync-template",{ name: templateName })
+      // .post("/campaign/templates/sync-template",{ name: templateName })
+      api.post("/campaign/templates/sync-template", { name: templateName }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       .then(res => {
         console.log("Sync successful----- ", res.data.sync_status.success)
         if(res.data.sync_status.success)
@@ -234,9 +250,13 @@ export default function TemplateCreation() {
   };
 
   const syncTemplate1 = (templateName) => {
+    const token = localStorage.getItem("token"); // or sessionStorage
     api
       //.get('/getAlltemplates')
-      .post("/campaign/templates/sync-template",{ name: templateName })
+      // .post("/campaign/templates/sync-template",{ name: templateName })
+      api.post("/campaign/templates/sync-template", { name: templateName }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       .then(res => {
         console.log("Sync successful----- ", res.data.sync_status.success)
         if(res.data.sync_status.success)

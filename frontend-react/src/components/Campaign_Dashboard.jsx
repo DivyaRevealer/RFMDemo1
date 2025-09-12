@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Row, Col, Select, Typography, Space, Button, Progress } from "antd";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+
 const { Option } = Select;
 const { Title } = Typography;
 import GaugeSpeedoMeter from "./GaugeSpeedoMeter";

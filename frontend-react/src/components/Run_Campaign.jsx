@@ -45,14 +45,23 @@ const RunCampaign = () => {
   const [status, setStatus] = useState("idle"); // idle | ready | sending | done | error
   const [progress, setProgress] = useState(0);
 
+  // useEffect(() => {
+  //   //fetch("http://localhost:4001/campaign")
+  //   loadTemplates();
+  //   fetch("/api/campaign")
+  //     .then((res) => res.json())
+  //     .then(setCampaigns)
+  //     .catch((err) => console.error("Failed to load campaigns", err));
+  // }, []);
+
   useEffect(() => {
-    //fetch("http://localhost:4001/campaign")
     loadTemplates();
-    fetch("/api/campaign")
-      .then((res) => res.json())
-      .then(setCampaigns)
-      .catch((err) => console.error("Failed to load campaigns", err));
+    api
+      .get('/campaign')
+      .then(res => setCampaigns(res.data))
+      .catch(() => message.error('Failed to load campaigns'));
   }, []);
+
 
   const handleSelect = (id) => {
     setSelectedCampaign(id);
@@ -110,9 +119,14 @@ const RunCampaign = () => {
   }
 
   const loadTemplates = () => {
+     const token = localStorage.getItem("token"); // wherever you store it after login
       api
         //.get('/getAlltemplates')
-        .get("/campaign/templates/getAlltemplates")
+        // .get("/campaign/templates/getAlltemplates")
+        .get("/campaign/templates/getAlltemplates", {
+          headers: {
+            Authorization: `Bearer ${token}`,  // 👈 required
+          }})
         .then(res => {
           console.log("res.data.templates----- ",res)
           const list = (res.data.templates || res.data || []).map(t => ({
@@ -587,6 +601,14 @@ const RunCampaign = () => {
                     <Button type="primary" onClick={startBroadcast}>
                       Start Broadcasting
                     </Button>
+                    
+                                  <Button
+                                    href={`/api/campaign/run/${selectedCampaign}/numbers/download`}
+                                    target="_blank"
+                                  >
+                                    Download Numbers
+                                  </Button>
+                             
                      <Button onClick={handleGoBack}>Go Back</Button>
                   </Space>
                   </div>

@@ -4,7 +4,7 @@ from typing import Optional
 from jose import JWTError, jwt
 
 # Secret key and algorithm for encoding JWT
-SECRET_KEY = "your-secret-key"  # Replace with environment variable in production
+SECRET_KEY = "rfmapplication7890"  # Replace with environment variable in production
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

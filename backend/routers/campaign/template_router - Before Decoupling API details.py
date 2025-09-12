@@ -4,8 +4,6 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from controllers.auth import get_current_user
-from models.user import User
 from database import get_db
 from utils.file_server import upload_image_to_api
 from utils.file_server import upload_video_to_api
@@ -62,7 +60,7 @@ async def create_template(req: Request):
 
 
 @router.post("/sync-template")
-async def sync_template(req: Request,current_user: User = Depends(get_current_user)):
+async def sync_template(req: Request):
     payload = await req.json()
     print("payload------------ ",payload.get("name"))
     #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
@@ -94,7 +92,7 @@ async def sync_template(req: Request,current_user: User = Depends(get_current_us
     #return response.json()
 
 @router.get("/getAlltemplates")
-async def list_templates(current_user: User = Depends(get_current_user)):
+async def list_templates():
     
     #api_key = "skI7lyZ0g0qj4dHDvwJ5k"
     
@@ -180,7 +178,7 @@ async def sendWatsAppText(req: Request,db: Session = Depends(get_db)):
         return "No customer matched"
     
 @router.post("/create-text-template")
-async def create_text_template(req: Request,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+async def create_text_template(req: Request,db: Session = Depends(get_db)):
     # """Proxy endpoint dedicated for text templates."""
     # return await create_template(req)
     payload = await req.json()
@@ -220,8 +218,7 @@ async def create_image_template(
     body: str = Form(...),
     footer: str = Form(""),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     contents = await file.read()
     if len(contents) > 4 * 1024 * 1024:
@@ -298,8 +295,7 @@ async def create_video_template(
     body: str = Form(...),
     footer: str = Form(""),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     
     contents = await file.read()

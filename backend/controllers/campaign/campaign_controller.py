@@ -1,5 +1,7 @@
+import csv
 from decimal import Decimal
-from io import BytesIO
+from io import BytesIO, StringIO
+from fastapi.responses import StreamingResponse
 import pandas as pd
 import math
 from fastapi import HTTPException
@@ -349,3 +351,158 @@ def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetail
         shortlisted_count=shortlisted_count,
     )
 
+def export_crm_numbers(db: Session, campaign_id: int) -> BytesIO:
+    """Export distinct phone numbers from crm_sales for a campaign."""
+    camp: Campaign = db.query(Campaign).get(campaign_id)
+    if not camp:
+        raise HTTPException(404, "Campaign not found")
+
+    sql_numbers = text(
+        """
+        SELECT s.CUST_MOBILENO AS mobile_no
+        FROM crm_sales s
+        """
+    )
+
+    rows = db.execute(sql_numbers).fetchall()
+    df = pd.DataFrame([{"mobile_no": r.mobile_no} for r in rows])
+
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False)
+    buffer.seek(0)
+    return buffer
+
+def get_mobile_numbers(db: Session, filters) -> list[str]:
+    """Fetch mobile numbers based on provided campaign filters.
+    Filters tied to product hierarchy (brand/section/product/model/item/valueThreshold)
+    query ``crm_sales``. Geography/RFM filters query ``crm_analysis``. If both
+    groups of filters are supplied, the two tables are joined on mobile number.
+    """
+
+    params = {}
+    sales_clauses = []
+    analysis_clauses = []
+
+    # --- Sales filters ---
+    if getattr(filters, "purchaseBrand", None):
+        sales_clauses.append("s.BRAND IN :brands")
+        params["brands"] = tuple(filters.purchaseBrand)
+    if getattr(filters, "section", None):
+        sales_clauses.append("s.SECTION IN :sections")
+        params["sections"] = tuple(filters.section)
+    if getattr(filters, "product", None):
+        sales_clauses.append("s.PRODUCT IN :products")
+        params["products"] = tuple(filters.product)
+    if getattr(filters, "model", None):
+        sales_clauses.append("s.MODEL IN :models")
+        params["models"] = tuple(filters.model)
+    if getattr(filters, "item", None):
+        sales_clauses.append("s.ITEM IN :items")
+        params["items"] = tuple(filters.item)
+    if getattr(filters, "valueThreshold", None) is not None:
+        sales_clauses.append("s.VALUE >= :val_threshold")
+        params["val_threshold"] = filters.valueThreshold
+
+    # --- Analysis filters ---
+    if getattr(filters, "branch", None):
+        analysis_clauses.append("a.LAST_IN_STORE_NAME IN :branch")
+        params["branch"] = tuple(filters.branch)
+    if getattr(filters, "city", None):
+        analysis_clauses.append("a.LAST_IN_STORE_CITY IN :city")
+        params["city"] = tuple(filters.city)
+    if getattr(filters, "state", None):
+        analysis_clauses.append("a.LAST_IN_STORE_STATE IN :state")
+        params["state"] = tuple(filters.state)
+    if getattr(filters, "rfmSegment", None):
+        analysis_clauses.append("a.SEGMENT_MAP IN :segment")
+        params["segment"] = tuple(filters.rfmSegment)
+    if getattr(filters, "rScore", None):
+        analysis_clauses.append("a.R_SCORE IN :rscore")
+        params["rscore"] = tuple(filters.rScore)
+
+    op_map = {"=": "=", ">=": ">=", "<=": "<="}
+    if getattr(filters, "recencyOp", None) and getattr(filters, "recencyMin", None) is not None:
+        if filters.recencyOp == "between" and getattr(filters, "recencyMax", None) is not None:
+            analysis_clauses.append("a.DAYS BETWEEN :rmin AND :rmax")
+            params["rmin"] = filters.recencyMin
+            params["rmax"] = filters.recencyMax
+        else:
+            op = op_map.get(filters.recencyOp)
+            if op:
+                analysis_clauses.append(f"a.DAYS {op} :rmin")
+                params["rmin"] = filters.recencyMin
+
+    if getattr(filters, "frequencyOp", None) and getattr(filters, "frequencyMin", None) is not None:
+        if filters.frequencyOp == "between" and getattr(filters, "frequencyMax", None) is not None:
+            analysis_clauses.append("a.F_VALUE BETWEEN :fmin AND :fmax")
+            params["fmin"] = filters.frequencyMin
+            params["fmax"] = filters.frequencyMax
+        else:
+            op = op_map.get(filters.frequencyOp)
+            if op:
+                analysis_clauses.append(f"a.F_VALUE {op} :fmin")
+                params["fmin"] = filters.frequencyMin
+
+    if getattr(filters, "monetaryOp", None) and getattr(filters, "monetaryMin", None) is not None:
+        if filters.monetaryOp == "between" and getattr(filters, "monetaryMax", None) is not None:
+            analysis_clauses.append("a.M_VALUE BETWEEN :mmin AND :mmax")
+            params["mmin"] = filters.monetaryMin
+            params["mmax"] = filters.monetaryMax
+        else:
+            op = op_map.get(filters.monetaryOp)
+            if op:
+                analysis_clauses.append(f"a.M_VALUE {op} :mmin")
+                params["mmin"] = filters.monetaryMin
+
+    # --- Build SQL ---
+    if sales_clauses and analysis_clauses:
+        sql = (
+            "SELECT DISTINCT s.CUST_MOBILENO,a.customer_name,a.segment_map FROM crm_sales s "
+            "JOIN crm_analysis a ON s.CUST_MOBILENO = a.CUST_MOBILENO"
+        )
+        where = sales_clauses + analysis_clauses
+    elif sales_clauses:
+        sql = "SELECT DISTINCT s.CUST_MOBILENO FROM crm_sales s"
+        where = sales_clauses
+    else:
+        sql = "SELECT DISTINCT a.CUST_MOBILENO,a.customer_name,a.segment_map FROM crm_analysis a"
+        where = analysis_clauses
+
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+
+    
+    rows = db.execute(text(sql), params)
+    #.all()
+    
+    # rows = db.execute(text("""
+    #     SELECT CUST_MOBILENO,CUSTOMER_NAME,SEGMENT_MAP FROM crm_analysis_tcm
+    #     WHERE LAST_IN_STORE_CITY = :city 
+    # """), {"city": "COIMBATORE"})
+
+    #return [r[0] for r in rows if r[0]]
+    return rows
+
+
+def get_mobile_numbers1(db: Session, filters) -> list[str]:
+    query = text("SELECT * FROM your_table WHERE some_filter = :val")
+    rows = db.execute(query, {"val": "SOME_VALUE"})
+
+    def iter_csv():
+        output = StringIO()
+        writer = csv.writer(output)
+        # Write header
+        writer.writerow(rows.keys())
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        # Write rows
+        for row in rows:
+            writer.writerow(row)
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    headers = {"Content-Disposition": "attachment; filename=export.csv"}
+    return StreamingResponse(iter_csv(), headers=headers, media_type="text/csv")
