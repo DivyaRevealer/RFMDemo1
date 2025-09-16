@@ -128,3 +128,27 @@ class CampaignListOut(BaseModel):
     end_date: date
     class Config:
         from_attributes = True
+
+class CampaignRunFilters(BaseModel):
+    branch: Optional[List[str]] = None
+    city: Optional[List[str]] = None
+    state: Optional[List[str]] = None
+    recency_op: Optional[str] = None
+    recency_min: Optional[int] = None
+    frequency_op: Optional[str] = None
+    frequency_min: Optional[int] = None
+    monetary_op: Optional[str] = None
+    monetary_min: Optional[float] = None
+    r_score: Optional[List[int]] = None
+    f_score: Optional[List[int]] = None
+    m_score: Optional[List[int]] = None
+    brand: Optional[str] = None
+    section: Optional[List[str]] = None
+    product: Optional[List[str]] = None
+    model: Optional[List[str]] = None
+    item: Optional[List[str]] = None
+    value_threshold: Optional[float] = None
+    birthday_start: Optional[str] = None
+    birthday_end: Optional[str] = None
+    anniversary_start: Optional[str] = None
+    anniversary_end: Optional[str] = None

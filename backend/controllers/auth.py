@@ -21,6 +21,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     print(new_hash)
     db_user = db.query(User).filter(User.username == user.username).first()
     print("🔎 User from DB:", db_user)
+    #password-- $RFMtcm%03
 
     if not db_user:
         print("❌ No such user")

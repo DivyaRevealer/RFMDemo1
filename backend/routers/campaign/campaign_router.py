@@ -16,6 +16,7 @@ from models.campaign.upload_contact_model import CampaignUpload
 from controllers.campaign.campaign_controller import (
     create_campaign,
     get_campaign_options,
+    get_campaign_run_count_from_request,
     list_campaigns,
     get_campaign,
     update_campaign,
@@ -32,6 +33,7 @@ from schemas.campaign.campaign_schema import (
     CampaignListOut,
     CampaignOptions,
     CampaignRunDetails,
+    CampaignRunFilters,
     )
 from database import SessionLocal
 from typing import List, Optional
@@ -167,6 +169,18 @@ def read_campaign_run_details(campaign_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Campaign not found")
     return details
 
+@router.post("/run/count")
+def get_campaign_run_count(filters: CampaignRunFilters, db: Session = Depends(get_db)):
+    try:
+        result = get_campaign_run_count_from_request(
+            db,
+            filters.model_dump(exclude_none=True)  # ✅ Pydantic v2
+        )
+        # result already has {"total_customers": X, "shortlisted_customers": Y}
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{campaign_id}", response_model=CampaignOut)

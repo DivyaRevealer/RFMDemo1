@@ -1,0 +1,770 @@
+import React, { useState, useEffect } from "react";
+import api from "../api";  
+import {
+  // Card, Typography, Select, Space, Modal, Button, Input,
+  // Checkbox, Tag, Alert, Progress, message, Row, Col
+  Card,
+  Typography,
+  Select,
+  Space,
+  Button,
+  Input,
+  Checkbox,
+  Tag,
+  Alert,
+  Progress,
+  Row,
+  Col,
+  message   
+} from "antd";
+
+
+// import { Statistic } from "antd";
+// import { UserOutlined } from "@ant-design/icons";
+const { Option } = Select;
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+
+const RunCampaign = () => {
+  const [campaigns, setCampaigns] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [campaignDetails, setCampaignDetails] = useState(null);
+
+  const [showDetails, setShowDetails] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+
+  const [offerText, setOfferText] = useState("");
+  const [channels, setChannels] = useState([]);
+  // const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappNumbers, setWhatsappNumbers] = useState("");
+  const [smsNumber, setSmsNumber] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | ready | sending | done | error
+  const [progress, setProgress] = useState(0);
+
+  // useEffect(() => {
+  //   //fetch("http://localhost:4001/campaign")
+  //   loadTemplates();
+  //   fetch("/api/campaign")
+  //     .then((res) => res.json())
+  //     .then(setCampaigns)
+  //     .catch((err) => console.error("Failed to load campaigns", err));
+  // }, []);
+
+  useEffect(() => {
+    loadTemplates();
+    api
+      .get('/campaign')
+      .then(res => setCampaigns(res.data))
+      .catch(() => message.error('Failed to load campaigns'));
+  }, []);
+
+
+  const handleSelect = (id) => {
+    setSelectedCampaign(id);
+    //fetch(`http://localhost:4001/campaign/run/${id}`)
+    fetch(`/api/campaign/run/${id}`)
+      .then((res) => res.json())
+      // .then((data) => {
+      //   setCampaignDetails({
+      //     rfmSegment: data.rfm_segment_label,
+      //     brand: data.brand_label,
+      //     valueThreshold: data.value_threshold,
+      //     shortlistedCustomers: data.shortlisted_count,
+      //   });
+      //   setShowDetails(true);
+      //   setShowNext(false);
+      // })
+      .then((data) => {
+          // setCampaignDetails(data);        // keep everything from backend
+          // setShowDetails(true);
+          // setShowNext(false);
+        
+        setCampaignDetails(data); // keep everything from backend
+        setShowNext(true);
+        setShowDetails(data.based_on !== "upload");
+        })
+      .catch((err) => console.error("Failed to load campaign details", err));
+  };
+
+  // const handleContinue = () => {
+  //   Modal.confirm({
+  //     title: "Do you want to run this campaign?",
+  //     onOk: () => setShowNext(true),
+  //   });
+  // };
+
+  const handleGoBack = () => {
+    setShowDetails(false);
+    setSelectedCampaign(null);
+    setShowNext(false);
+    setOfferText("");
+    setChannels([]);
+    // setWhatsappNumber("");
+    setWhatsappNumbers("");
+    setPromoCode("");
+    setStatus("idle");
+    setProgress(0);
+  };
+
+  function generatePromo() {
+    const d = new Date();
+    const yymmdd = `${String(d.getFullYear()).slice(2)}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    const rand = Math.random().toString(36).slice(2,6).toUpperCase();
+    setPromoCode(`CAM${yymmdd}${rand}`);
+    setStatus("ready");
+  }
+
+  const loadTemplates = () => {
+     const token = localStorage.getItem("token"); // wherever you store it after login
+      api
+        //.get('/getAlltemplates')
+        // .get("/campaign/templates/getAlltemplates")
+        .get("/campaign/templates/getAlltemplates", {
+          headers: {
+            Authorization: `Bearer ${token}`,  // 👈 required
+          }})
+        .then(res => {
+          console.log("res.data.templates----- ",res)
+          const list = (res.data.templates || res.data || []).map(t => ({
+            key: t.id || t.name,
+            id: Number(t.id) || 0,  
+            name: t.name,
+            templateType: t.template_type || t.templateType || t.category,
+            templateCreateStatus:
+             t.Status,
+          }));
+         // setTemplates(list);
+         const approved = list.filter(t => t.templateCreateStatus === "APPROVED");
+         approved.sort((a, b) => (b.id || 0) - (a.id || 0));
+  
+         setTemplates(approved);
+        })
+        .catch(() => message.error('Failed to fetch templates'));
+    };
+
+  async function startBroadcast() {
+   
+    setStatus("sending");
+    setProgress(0);
+
+
+    try {
+
+      let numbers = whatsappNumbers;
+      let basedon_value=campaignDetails?.based_on;
+      let campaign_id=campaignDetails?.id;
+      console.log("basedon_value----- ",campaignDetails?.based_on)
+      console.log("campaign_id----- ",campaign_id)
+      if (campaignDetails?.based_on === "upload") {
+        const res = await fetch(`/api/campaign/${selectedCampaign}/upload/numbers`);
+        const data = await res.json();
+        numbers = data.phone_numbers || "";
+      }
+     
+      console.log("selectedTemplate-------- ",selectedTemplate)
+      if (channels.includes("WhatsApp")) {
+        const templateRes = await fetch(`/api/campaign/templates/${selectedTemplate}/details`);
+        const templateData = await templateRes.json();
+        console.log("templateData------- ",templateData)
+
+        const templateType = templateData.template_type;       // e.g. "media" or "text"
+        const mediaType = templateData.media_type;    // e.g. "image" or "video"
+        //let endpoint = "/api/campaign/templates/sendWatsAppText"; // default
+        let endpoint = ""; // default
+        console.log("templateType--------------",templateType)
+        if (templateType === "media") {
+          if (mediaType === "image") {
+            endpoint = "/api/campaign/templates/sendWatsAppImage";
+          } else if (mediaType === "video") {
+            endpoint = "/api/campaign/templates/sendWatsAppVideo";
+          } 
+        }
+        else if(templateType === "text"){
+          endpoint = "/api/campaign/templates/sendWatsAppText";
+          console.log("endpoint------ ",endpoint)
+        }
+
+        if (campaignDetails?.based_on === "upload") {
+          //await fetch("/api/campaign/templates/sendWatsAppText", {
+            const response=await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone_numbers: numbers,
+              template_name: selectedTemplate,
+              basedon_value:basedon_value,
+              campaign_id:campaign_id,
+            }),
+          });
+          const resJson = await response.json();
+          console.log("Broadcast API Response:", resJson);
+          if(resJson.success)
+            alert("Broadcast is successfull!!")
+          else
+            alert("Broadcast Failed!!")
+        }
+        else{
+          console.log("isnide----- ",campaign_id)
+          const response=await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone_numbers: whatsappNumbers,
+              template_name: selectedTemplate,
+              basedon_value: basedon_value,
+              campaign_id:campaign_id,
+            }),
+          });
+          const resJson = await response.json();
+          console.log("Broadcast API Response:", resJson);
+          if(resJson.success)
+            alert("Broadcast is successfull!!")
+          else
+            alert("Broadcast Failed!!")
+      }
+      // const resJson = await response.json(); // 👈 catch response here
+      // console.log("Broadcast API Response:", resJson);
+
+     
+      }
+      const timer = setInterval(() => {
+        setProgress((p) => {
+          if (p >= 100) {
+            clearInterval(timer);
+            setStatus("done");
+            return 100;
+          }
+          return p + 8;
+        });
+      }, 300);
+    } catch (e) {
+      console.error(e);
+      setStatus("error");
+    }
+  }
+
+  const hasValue = (v) => {
+  if (v === null || v === undefined) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "string") return v.trim() !== "";
+  return v !== 0; // prevent accidental 0 showing
+};
+
+  return (
+    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <Card title="Run Campaign" style={{ marginTop: 1 }}>
+        <Space direction="vertical" style={{ width: "100%" }} size="middle">
+          <div>
+            <Text strong>Choose Campaign :</Text>
+            <div style={{ marginTop: 2 ,paddingLeft:"26px"}}>
+              <Select
+                placeholder="Select a campaign"
+                style={{ width: "39%" }}
+                onChange={handleSelect}
+                value={selectedCampaign}
+                allowClear
+              >
+                {campaigns.map((c) => (
+                  <Option key={c.id} value={c.id}>{c.name}</Option>
+                ))}
+              </Select>
+            </div>
+          </div>
+
+          {/* Two-column layout */}
+          <Row gutter={16}>
+            
+              {showDetails && campaignDetails && (
+                <Col xs={24} md={14}>
+                  <Card>
+                    {/* style={{ background: "#6175b3ff" }} title="Campaign Details"> */}
+                    <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Campaign Details</Title>
+                      {(() => {
+                      // helpers
+                      const join = (v) => Array.isArray(v) ? v.join(", ") : (v ?? "-");
+                      const fmtRange = (a, b) => `${a || "-"} → ${b || "-"}`;
+                      const combine = (op, min, max) => {
+                        if (!op) return null;
+                        const opStr = String(op).toLowerCase();
+                        if ((opStr === "between" || opStr === "range") && min != null && max != null) {
+                          return `between ${min} and ${max}`;
+                        }
+                        const val = (min ?? max);
+                        return val != null ? `${op} ${val}` : op;
+                      };
+
+                      // label/value alignment
+                      const LABEL_W = 200; // wide enough for the longest label
+                      const L = (text) => (
+                        <span style={{ display: "inline-block", minWidth: LABEL_W, fontWeight: "bold" }}>
+                          {text}:
+                        </span>
+                      );
+
+                      // rfm mode
+                      const isSegmented =
+                        (Array.isArray(campaignDetails.rfm_segments) && campaignDetails.rfm_segments.length > 0) ||
+                        (!!campaignDetails.rfm_segment_label && campaignDetails.rfm_segment_label !== "-");
+
+                      // combined ops
+                      const recencyStr   = combine(campaignDetails.recency_op,   campaignDetails.recency_min,   campaignDetails.recency_max);
+                      const frequencyStr = combine(campaignDetails.frequency_op, campaignDetails.frequency_min, campaignDetails.frequency_max);
+                      const monetaryStr  = combine(campaignDetails.monetary_op,  campaignDetails.monetary_min,  campaignDetails.monetary_max);
+
+                      // presence flags
+                      const hasR = campaignDetails.r_score != null && String(campaignDetails.r_score) !== "";
+                      const hasF = campaignDetails.f_score != null && String(campaignDetails.f_score) !== "";
+                      const hasM = campaignDetails.m_score != null && String(campaignDetails.m_score) !== "";
+                      const hasModel = Array.isArray(campaignDetails.model) && campaignDetails.model.length > 0;
+                      const hasItem  = Array.isArray(campaignDetails.item)  && campaignDetails.item.length  > 0;
+                      const hasBrand = Array.isArray(campaignDetails.purchase_brand) && campaignDetails.purchase_brand.length > 0; // fixed
+                      const hasSection  = Array.isArray(campaignDetails.section)  && campaignDetails.section.length  > 0;
+                      const hasProduct = Array.isArray(campaignDetails.product) && campaignDetails.product.length > 0;
+
+                      const shortlisted = Number(
+                        campaignDetails.shortlisted_count ?? campaignDetails.shortlistedCustomers ?? 0
+                      ).toLocaleString("en-IN");
+
+                      return (
+                        <>
+                          {/* Row 1: Name + Shortlisted */}
+                          <Row gutter={12} style={{ marginBottom: 6 }}>
+                            <Col span={12}>
+                              {L("Name")}
+                              <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                                {campaignDetails.name || "-"}
+                              </span>
+                            </Col>
+                          </Row>
+                          <Row gutter={12} style={{ marginBottom: 6 }}>
+                            <Col span={12}>
+                              {/* {L("No. of Customers Shortlisted")} */}
+                              {/* <span
+                                style={{
+                                  background: "linear-gradient(90deg, #4caf50, #81c784)",
+                                  color: "#fff",
+                                  padding: "4px 12px",
+                                  borderRadius: "10px",
+                                  fontWeight: "bold",
+                                  display: "inline-block",
+                                }}
+                              >
+                                {shortlisted}
+                              </span> */}
+
+                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '10px'
+                                    }}>
+                                      <strong>No. of Customers Shortlisted:</strong>
+                                      <div style={{
+                                        background: '#3f8600',
+                                        color: '#fff',
+                                        borderRadius: '50%',
+                                        width: '60px',
+                                        height: '60px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '18px',
+                                        fontWeight: 'bold'
+                                      }}>
+                                        {Number(campaignDetails.shortlisted_count ?? 0).toLocaleString("en-IN")}
+                                      </div>
+                                    </div>
+                                  </Col>
+                                </Row>
+
+                                {/* Row 2: Period */}
+                                <Row gutter={12} style={{ marginBottom: 10 }}>
+                                  <Col span={24}>
+                                    {L("Period")}
+                                    <span>{fmtRange(campaignDetails.start_date, campaignDetails.end_date)}</span>
+                                  </Col>
+                                </Row>
+
+                                {/* Row 3: Branch/City/State */}
+                                <Row gutter={12} style={{ marginBottom: 6 }}>
+                                  <Col span={24}>{L("Branch")}<span>{join(campaignDetails.branch) || "-"}</span></Col>
+                                </Row>
+                                <Row gutter={12} style={{ marginBottom: 6 }}>
+                                  <Col span={24}>{L("City")}<span>{join(campaignDetails.city) || "-"}</span></Col>
+                                </Row>
+                                <Row gutter={12} style={{ marginBottom: 6 }}>
+                                  <Col span={24}>{L("State")}<span>{join(campaignDetails.state) || "-"}</span></Col>
+                                </Row>
+
+                                {/* Row 4: RFM Mode */}
+                                {isSegmented ? (
+                                  <Row gutter={12} style={{ marginBottom: 6 }}>
+                                    <Col span={24}>
+                                      {L("RFM Mode")}
+                                      <span>RFM Segmented</span>
+                                      <span style={{ marginLeft: 16, fontWeight: "bold" }}>Segment:</span>{" "}
+                                      <span>
+                                        {campaignDetails.rfm_segment_label ||
+                                          (Array.isArray(campaignDetails.rfm_segments)
+                                            ? campaignDetails.rfm_segments[0]
+                                            : "-")}
+                                      </span>
+                                    </Col>
+                                  </Row>
+                                ) : (
+                                  <>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("Recency")}<span>{recencyStr || "-"}</span></Col>
+                                    </Row>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("Frequency")}<span>{frequencyStr || "-"}</span></Col>
+                                    </Row>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("Monetary")}<span>{monetaryStr || "-"}</span></Col>
+                                    </Row>
+                                  </>
+                                )}
+
+                                {/* Row 5: R/F/M Scores (only if present) */}
+                                {(hasR || hasF || hasM) && (
+                                  <>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("R-Score")}<span>{hasR ? campaignDetails.r_score : "-"}</span></Col>
+                                    </Row>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("F-Score")}<span>{hasF ? campaignDetails.f_score : "-"}</span></Col>
+                                    </Row>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("M-Score")}<span>{hasM ? campaignDetails.m_score : "-"}</span></Col>
+                                    </Row>
+                                  </>
+                                )}
+
+                                {/* Row 6: Purchase Type + Brand + Section + Product + Model + Item */}
+                                {(hasModel || hasItem || hasSection || hasProduct || hasBrand) && (
+                                  <>
+                                    <Row gutter={12} style={{ marginBottom: 6 }}>
+                                      <Col span={24}>{L("Purchase Type")}<span>{campaignDetails?.purchase_type ?? "-"}</span></Col>
+                                    </Row>
+
+                                    {hasBrand && (
+                                      <Row gutter={12} style={{ marginBottom: 6 }}>
+                                        <Col span={24}>{L("Brand")}<span>{join(campaignDetails?.purchase_brand) || "-"}</span></Col>
+                                      </Row>
+                                    )}
+
+                                    {hasSection && (
+                                      <Row gutter={12} style={{ marginBottom: 6 }}>
+                                        <Col span={24}>{L("Section")}<span>{join(campaignDetails?.section) || "-"}</span></Col>
+                                      </Row>
+                                    )}
+
+                                    {hasProduct && (
+                                      <Row gutter={12} style={{ marginBottom: 6 }}>
+                                        <Col span={24}>{L("Product")}<span>{join(campaignDetails?.product) || "-"}</span></Col>
+                                      </Row>
+                                    )}
+
+                                    {hasModel && (
+                                      <Row gutter={12} style={{ marginBottom: 6 }}>
+                                        <Col span={24}>{L("Model")}<span>{join(campaignDetails?.model) || "-"}</span></Col>
+                                      </Row>
+                                    )}
+
+                                    {hasItem && (
+                                      <Row gutter={12} style={{ marginBottom: 6 }}>
+                                        <Col span={24}>{L("Item")}<span>{join(campaignDetails?.item) || "-"}</span></Col>
+                                      </Row>
+                                    )}
+                                  </>
+                                )}
+
+                                {/* Row 7: Value Threshold */}
+                                <Row gutter={12} style={{ marginBottom: 6 }}>
+                                  <Col span={24}>{L("Value Threshold")}<span>{campaignDetails.value_threshold ?? "-"}</span></Col>
+                                </Row>
+
+                                {/* Row 8: Birthday Range */}
+                                <Row gutter={12} style={{ marginBottom: 6 }}>
+                                  <Col span={24}>{L("Birthday Range")}<span>{fmtRange(campaignDetails.birthday_start, campaignDetails.birthday_end)}</span></Col>
+                                </Row>
+                              </>
+                            );
+                          })()}
+
+                           <Space>
+                                <Button onClick={handleGoBack}>Go Back</Button>
+                           </Space>
+                              </Card>
+                            </Col>
+                            )}
+
+             <Col xs={24} md={showDetails ? 10 : 24}>
+                {showNext && (
+                  <Card>
+                  {/* <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Offer Details</Title>
+                  <TextArea
+                    rows={3}
+                    placeholder="e.g., ₹500 discount on minimum purchase of ₹50,000"
+                    value={offerText}
+                    onChange={(e) => setOfferText(e.target.value)}
+                  /> */}
+                  <div style={{ width: "80%" }}>
+                  <Title level={5} style={{ background: "#6175b3ff",  borderRadius: "8px 8px 0 0", }}>Template Name</Title>
+                  <Select
+                    showSearch  
+                    placeholder="Select an approved template"
+                    style={{ width: "100%" }}
+                    value={selectedTemplate}
+                    onChange={(value) => setSelectedTemplate(value)}
+                    allowClear
+                    optionFilterProp="children"                 // ✅ enables filtering by option text
+                    filterOption={(input, option) =>
+                      option?.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {templates.map(t => (
+                      <Option key={t.name} value={t.name}>
+                        {t.name}
+                      </Option>
+                    ))}
+                  </Select>
+                  </div>
+                  <div>
+                  <Title level={5} style={{ marginTop: 20, marginBottom: 12 }}>Choose Broadcasting Mode</Title>
+                  <div className="flex flex-col gap-2 mb-4">
+                  <Checkbox.Group value={channels} onChange={setChannels}>
+                    <Space direction="vertical" size={8} style={{ width: "100%", }}>
+                      {/* WhatsApp row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px"}}>
+                          <Checkbox value="WhatsApp">WhatsApp</Checkbox>
+                        </div>
+                        {/* {channels.includes("WhatsApp") && campaignDetails?.based_on !== "upload" && (
+                          <textarea
+                            placeholder="Enter WhatsApp numbers separated by commas"
+                            value={whatsappNumbers}
+                            onChange={(e) => setWhatsappNumbers(e.target.value)}
+                            style={{ minWidth: 280 }}
+                            size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
+                            
+                          />
+                        
+                        )} */}
+                      </div>
+                      
+                      {/* SMS row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px" }}>
+                          <Checkbox value="SMS">SMS</Checkbox>
+                        </div>
+                        {channels.includes("SMS") && campaignDetails?.based_on !== "upload" && (
+                          <textarea
+                            placeholder="Enter SMS number"
+                            value={smsNumber}
+                            onChange={(e) => setSmsNumber(e.target.value)}
+                            style={{ minWidth: 280 }}
+                            size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
+                            
+                          />
+                        )}
+                      </div>
+                     
+                      {/* Email row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: "100px" }}>
+                          <Checkbox value="Email">Email</Checkbox>
+                        </div>
+                        {channels.includes("Email") && campaignDetails?.based_on !== "upload" && (
+                          <textarea
+                            placeholder="Enter email address"
+                            value={emailAddress}
+                            onChange={(e) => setEmailAddress(e.target.value)}
+                            style={{ minWidth: 280 }}
+                            size="middle"
+                            className="w-full border rounded p-2"
+                            rows="3"
+                          />
+                        )}
+                      </div>
+                    </Space>
+                  </Checkbox.Group>
+                  </div>
+                  {/* <Title level={5} style={{ marginTop: 20, marginBottom: 8 }}>Promo Code</Title> */}
+                  {/* <Space>
+                    <Button style={{background: '#519751ff',fontWeight:"bold",fontSize: '17px'}}onClick={generatePromo}>Generate Promo Code</Button>
+                    {promoCode && <Tag level={15} color='#128012ff' style={{fontWeight:"bold",fontSize: '22px'}}>{promoCode}</Tag>}
+                  </Space> */}
+
+                  <div className="flex gap-3">
+                  <Space style={{ marginTop: 20 }}>
+                    <Button type="primary" onClick={startBroadcast}>
+                      Start Broadcasting
+                    </Button>
+{/*                     
+                                  <Button
+                                    href={`/api/campaign/run/${selectedCampaign}/numbers/download`}
+                                    target="_blank"
+                                  >
+                                    Download Numbers
+                                  </Button>
+                              */}
+                     <Button onClick={handleGoBack}>Go Back</Button>
+                  </Space>
+                  </div>
+                  </div>
+
+                  {/* <div style={{ marginTop: 16 }}>
+                    {status === "error" && (
+                      // <Alert type="error" showIcon message="Enter offer text and select at least one channel." />
+                      <Alert
+                        type="error"
+                        showIcon
+                        message="Enter offer text, select channels, and provide WhatsApp number if applicable."
+                      />
+                    )}
+                    {status === "sending" && (
+                      <>
+                        <Alert type="info" showIcon message="Broadcasting in progress..." />
+                        <Progress percent={progress} />
+                      </>
+                    )}
+                    {status === "done" && (
+                      <Alert type="success" showIcon message="Broadcast completed. You can go back to the main menu." />
+                    )}
+                  </div> */}
+                </Card>
+              )}
+            </Col>
+          </Row>
+        </Space>
+      </Card>
+     <Row gutter={[16, 16]}>
+  {/* 1. Campaign Info */}
+  {(hasValue(campaignDetails?.name) || (hasValue(campaignDetails?.start_date) && hasValue(campaignDetails?.end_date)) || hasValue(campaignDetails?.based_on)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{  marginBottom: "1px",background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff",marginTop: "1px" }}>Campaign Info</Title>
+        {hasValue(campaignDetails?.name) && <p style={{ marginBottom: "0px" }}><strong>Name:</strong> {campaignDetails.name}</p>}
+        {hasValue(campaignDetails?.start_date) && hasValue(campaignDetails?.end_date) && (
+          <p style={{ marginBottom: "0px" }}><strong>Period:</strong> {campaignDetails.start_date} → {campaignDetails.end_date}</p>
+        )}
+        {hasValue(campaignDetails?.based_on) && (
+          <p style={{ marginBottom: "0px" }}><strong>Based On:</strong> {campaignDetails.based_on}</p>
+        )}
+      </Card>
+    </Col>
+  )}
+
+  {/* 2. Location Info */}
+  {(hasValue(campaignDetails?.branch) || hasValue(campaignDetails?.city) || hasValue(campaignDetails?.state)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #56ab2f, #a8e063)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff" ,marginTop: "1px"}}>Location Info</Title>
+        {hasValue(campaignDetails?.branch) && (
+          <p><strong>Branch:</strong> {Array.isArray(campaignDetails.branch) ? campaignDetails.branch.join(", ") : campaignDetails.branch}</p>
+        )}
+        {hasValue(campaignDetails?.city) && (
+          <p><strong>City:</strong> {Array.isArray(campaignDetails.city) ? campaignDetails.city.join(", ") : campaignDetails.city}</p>
+        )}
+        {hasValue(campaignDetails?.state) && (
+          <p style={{ marginBottom: "0px" }}><strong>State:</strong> {Array.isArray(campaignDetails.state) ? campaignDetails.state.join(", ") : campaignDetails.state}</p>
+        )}
+      </Card>
+    </Col>
+  )}
+
+  {/* 3. Targeting Criteria */}
+  {(hasValue(campaignDetails?.recency_min) || hasValue(campaignDetails?.frequency_min) || hasValue(campaignDetails?.monetary_min)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #ff512f, #dd2476)", color: "#fff",  height: "180px" }}>
+        <Title level={4} style={{ color: "#fff" ,marginTop: "1px"}}>Targeting Criteria</Title>
+        {hasValue(campaignDetails?.recency_min) && (
+          <p><strong>Recency:</strong> {campaignDetails.recency_op} {campaignDetails.recency_min}</p>
+        )}
+        {hasValue(campaignDetails?.frequency_min) && (
+          <p><strong>Frequency:</strong> {campaignDetails.frequency_op} {campaignDetails.frequency_min}</p>
+        )}
+        {hasValue(campaignDetails?.monetary_min) && (
+          <p style={{ marginBottom: "0px" }}><strong>Monetary:</strong> {campaignDetails.monetary_op} {campaignDetails.monetary_min}</p>
+        )}
+      </Card>
+    </Col>
+  )}
+
+  {/* 4. RFM Scores */}
+  {(hasValue(campaignDetails?.r_score) || hasValue(campaignDetails?.f_score) || hasValue(campaignDetails?.m_score)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #ff9800, #f57c00)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff" ,marginTop: "1px"}}>RFM Scores</Title>
+        {hasValue(campaignDetails?.r_score) && <p><strong>R-Score:</strong> {campaignDetails.r_score}</p>}
+        {hasValue(campaignDetails?.f_score) && <p><strong>F-Score:</strong> {campaignDetails.f_score}</p>}
+        {hasValue(campaignDetails?.m_score) && <p style={{ marginBottom: "0px" }}><strong>M-Score:</strong> {campaignDetails.m_score}</p>}
+      </Card>
+    </Col>
+  )}
+
+  {/* 5. Purchase & Category */}
+  {(hasValue(campaignDetails?.purchase_type) || hasValue(campaignDetails?.purchase_brand) || hasValue(campaignDetails?.section)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #36d1dc, #5b86e5)", color: "#fff",  height: "180px" }}>
+        <Title level={4} style={{ color: "#fff",marginTop: "1px" }}>Purchase & Category</Title>
+        {hasValue(campaignDetails?.purchase_type) && <p><strong>Purchase Type:</strong> {campaignDetails.purchase_type}</p>}
+        {hasValue(campaignDetails?.purchase_brand) && <p><strong>Brand:</strong> {campaignDetails.purchase_brand.join(", ")}</p>}
+        {hasValue(campaignDetails?.section) && <p style={{ marginBottom: "0px" }}><strong>Section:</strong> {campaignDetails.section.join(", ")}</p>}
+      </Card>
+    </Col>
+  )}
+
+  {/* 6. Product & Model */}
+  {(hasValue(campaignDetails?.product) || hasValue(campaignDetails?.model) || hasValue(campaignDetails?.item)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #9c27b0, #6a1b9a)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff",marginTop: "1px" }}>Product & Model</Title>
+        {hasValue(campaignDetails?.product) && <p><strong>Product:</strong> {campaignDetails.product.join(", ")}</p>}
+        {hasValue(campaignDetails?.model) && <p><strong>Model:</strong> {campaignDetails.model.join(", ")}</p>}
+        {hasValue(campaignDetails?.item) && <p style={{ marginBottom: "0px" }}><strong>Item:</strong> {campaignDetails.item.join(", ")}</p>}
+      </Card>
+    </Col>
+  )}
+
+  {/* 7. Value & Birthday */}
+  {(hasValue(campaignDetails?.value_threshold) || hasValue(campaignDetails?.birthday_start) || hasValue(campaignDetails?.birthday_end)) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #11998e, #38ef7d)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff" ,marginTop: "1px"}}>Value & Birthday</Title>
+        {hasValue(campaignDetails?.value_threshold) && <p><strong>Value Threshold:</strong> {campaignDetails.value_threshold}</p>}
+        {(hasValue(campaignDetails?.birthday_start) || hasValue(campaignDetails?.birthday_end)) && (
+          <p style={{ marginBottom: "0px" }}><strong>Birthday Range:</strong> {campaignDetails.birthday_start} → {campaignDetails.birthday_end}</p>
+        )}
+      </Card>
+    </Col>
+  )}
+
+  {/* 8. Customers Shortlisted */}
+  {hasValue(campaignDetails?.shortlisted_count) && (
+    <Col xs={24} md={12} lg={8}>
+      <Card style={{ background: "linear-gradient(135deg, #00c6ff, #0072ff)", color: "#fff" ,  height: "180px"}}>
+        <Title level={4} style={{ color: "#fff",marginTop: "1px" }}>Customers Shortlisted</Title>
+        <div style={{ fontSize: "28px", fontWeight: "bold" }}>
+          {Number(campaignDetails.shortlisted_count).toLocaleString("en-IN")}
+        </div>
+      </Card>
+    </Col>
+  )}
+</Row>
+
+    </div>
+    
+  );
+};
+
+export default RunCampaign;

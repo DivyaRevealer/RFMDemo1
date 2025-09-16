@@ -2,7 +2,7 @@ import { message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 //import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio } from 'antd';
-import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload, Space ,Divider,Switch  } from 'antd';
+import { Form, Card, DatePicker, Row, Col, InputNumber, Select, Button, Typography, Input, Checkbox, Radio, Upload, Space ,Divider,Switch,Modal  } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useSearchParams } from 'react-router-dom';
@@ -190,7 +190,7 @@ export default function Create_Campaign() {
 
 
     if (values.basedOn !== 'upload') {
-      alert(values.rfmMode)
+      
       
       Object.assign(payload, {
         
@@ -244,7 +244,7 @@ export default function Create_Campaign() {
       }
       console.log("-----------------",values.rfmMode)
       if (values.rfmMode?.customized) {
-        alert("inside")
+        
         payload.rfm_mode = 'customized';
       }
       if (values.rfmMode?.segmented) {
@@ -288,6 +288,7 @@ export default function Create_Campaign() {
         //await api.post('/campaign/createCampaign', payload);
         resp = await api.post('/campaign/createCampaign', payload);
         message.success('Campaign saved successfully');
+        form.resetFields();   // <-- clear all fields after create
       }
       const newId = campaignId || resp?.data?.id;
       if (!newId) {
@@ -356,6 +357,58 @@ export default function Create_Campaign() {
   const watchProduct = Form.useWatch('product', form) || [];
   const watchModel = Form.useWatch('model', form) || [];
   const watchItem = Form.useWatch('item', form) || [];
+  const watchValueThreshold = Form.useWatch('valueThreshold', form);
+
+  const requirePurchaseType =
+  (watchPurchaseBrand && watchPurchaseBrand.length > 0) ||
+  (watchSection && watchSection.length > 0) ||
+  (watchProduct && watchProduct.length > 0) ||
+  (watchModel && watchModel.length > 0) ||
+  (watchItem && watchItem.length > 0) ||
+  !!watchValueThreshold;
+
+  const handleCheckAndCreate = async () => {
+  try {
+    const values = form.getFieldsValue();
+   // const res = await axios.post('/api/campaign/download-numbers', values);
+
+    // // assuming backend returns { total: X, shortlisted: Y }
+    // const { total, shortlisted } = res.data;
+      // Convert ranges to proper format
+    const payload = {
+      ...values,
+      birthday_start: values.birthdayRange?.[0]?.format('YYYY-MM-DD'),
+      birthday_end: values.birthdayRange?.[1]?.format('YYYY-MM-DD'),
+      anniversary_start: values.anniversaryRange?.[0]?.format('YYYY-MM-DD'),
+      anniversary_end: values.anniversaryRange?.[1]?.format('YYYY-MM-DD'),
+    };
+
+    const res = await axios.post('/api/campaign/run/count', payload);
+    const { total_customers, shortlisted_customers } = res.data;
+
+    Modal.confirm({
+      title: "Confirm Campaign Creation",
+      content: (
+        <div>
+          <p><strong>Total Customers:</strong> {total_customers}</p>
+          <p><strong>Shortlisted Customers:</strong> {shortlisted_customers}</p>
+          <p>Do you want to proceed with creating the campaign?</p>
+        </div>
+      ),
+      okText: "Yes, Create",
+      cancelText: "No, Edit",
+      onOk: () => {
+        form.submit();   // triggers onFinish
+      },
+      onCancel: () => {
+        message.info("You can edit filters before creating the campaign.");
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    message.error("Failed to fetch customer counts");
+  }
+};
 
 //  const watchRfmMode = Form.useWatch('rfmMode', form) || 'customized';
 
@@ -528,7 +581,28 @@ export default function Create_Campaign() {
                 label="Period"
                 rules={[{ required: true, message: 'Please select campaign dates' }]}
               >
-                <RangePicker style={{ width: '100%' }} />
+                {/* <RangePicker style={{ width: '100%' }} /> */}
+                <RangePicker
+                  style={{ width: '100%' }}
+                  disabledDate={(currentDate) => {
+                    const dates = form.getFieldValue('campaignPeriod');
+                    if (!dates) return false;
+
+                    const [start, end] = dates;
+
+                    // disable all dates before "from"
+                    if (start && !end) {
+                      return currentDate && currentDate < start.startOf('day');
+                    }
+
+                    // disable all dates after "to"
+                    if (end && !start) {
+                      return currentDate && currentDate > end.endOf('day');
+                    }
+
+                    return false;
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -555,6 +629,7 @@ export default function Create_Campaign() {
                   <MultiSelectDropdown
                     name="branch"
                     label="Branch"
+                    allowClear  
                     placeholder="Select branches"
                     optionsProvider={() => computeGeoOptions().allowedBranches}
                     disabled={watchBasedOn  === 'upload'}
@@ -568,6 +643,7 @@ export default function Create_Campaign() {
                   <MultiSelectDropdown
                     name="city"
                     label="City"
+                    allowClear
                     placeholder="Select cities"
                     optionsProvider={() => computeGeoOptions().allowedCities}
                     disabled={watchBasedOn  === 'upload'}
@@ -581,6 +657,7 @@ export default function Create_Campaign() {
                   <MultiSelectDropdown
                     name="state"
                     label="State"
+                    allowClear
                     placeholder="Select states"
                     optionsProvider={() => computeGeoOptions().allowedStates}
                     disabled={watchBasedOn  === 'upload'}
@@ -595,15 +672,27 @@ export default function Create_Campaign() {
         <Card title="RFM Mode" style={{ marginTop: 5 }}>
           <Row gutter={16} style={{ marginTop: 8 }}>
             <Col span={24}>
-              <Form.Item  style={{ marginBottom: 8 }}>
+              <Form.Item style={{ marginBottom: 8 }}>
                 <Space>
                   <Form.Item name={['rfmMode', 'customized']} valuePropName="checked" noStyle>
-                    <Switch />
+                    <Switch
+                      onChange={(checked) => {
+                        if (checked) {
+                          form.setFieldsValue({ rfmMode: { customized: true, segmented: false } });
+                        }
+                      }}
+                    />
                   </Form.Item>
                   <span>RFM Customized</span>
 
                   <Form.Item name={['rfmMode', 'segmented']} valuePropName="checked" noStyle>
-                    <Switch />
+                    <Switch
+                      onChange={(checked) => {
+                        if (checked) {
+                          form.setFieldsValue({ rfmMode: { customized: false, segmented: true } });
+                        }
+                      }}
+                    />
                   </Form.Item>
                   <span>RFM Segmented</span>
                 </Space>
@@ -626,7 +715,7 @@ export default function Create_Campaign() {
                         {/* Recency */}
                         <Col span={8}>
                           <Form.Item name="recencyOp" label="Recency Operator" >
-                            <Select placeholder="Operator">
+                            <Select placeholder="Operator" allowClear>
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
                               <Select.Option value="<=">≤</Select.Option>
@@ -661,7 +750,7 @@ export default function Create_Campaign() {
                         {/* Frequency */}
                         <Col span={8}>
                           <Form.Item name="frequencyOp" label="Frequency Operator" >
-                            <Select placeholder="Operator">
+                            <Select placeholder="Operator" allowClear>
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
                               <Select.Option value="<=">≤</Select.Option>
@@ -696,7 +785,7 @@ export default function Create_Campaign() {
                         {/* Monetary */}
                         <Col span={8}>
                           <Form.Item name="monetaryOp" label="Monetary Operator" >
-                            <Select placeholder="Operator">
+                            <Select placeholder="Operator" allowClear>
                               <Select.Option value="=">=</Select.Option>
                               <Select.Option value=">=">≥</Select.Option>
                               <Select.Option value="<=">≤</Select.Option>
@@ -732,7 +821,7 @@ export default function Create_Campaign() {
                       <Row gutter={16} style={{ marginTop: 16 }}>
                         <Col span={8}>
                           <Form.Item name="rScore" label="R-Score">
-                            <Select mode="multiple" placeholder="Select R score">
+                            <Select mode="multiple" placeholder="Select R score"  allowClear>
                               {r_scores.map(b => (
                                 <Option key={b} value={b}>{b}</Option>
                               ))}
@@ -741,7 +830,7 @@ export default function Create_Campaign() {
                         </Col>
                         <Col span={8}>
                           <Form.Item name="fScore" label="F-Score">
-                            <Select mode="multiple" placeholder="Select F score">
+                            <Select mode="multiple" placeholder="Select F score"  allowClear>
                               {f_scores.map(b => (
                                 <Option key={b} value={b}>{b}</Option>
                               ))}
@@ -762,7 +851,7 @@ export default function Create_Campaign() {
                   )}
 
                   {isSegmented && (
-                    <Card title="RFM Segmented" style={{ marginTop: 5 }}>
+                    // <Card style={{ marginTop: 5 }}>
                       <Form.Item
                         name="rfmSegment"
                         rules={[{ required: true, message: 'Select at least one segment' }]}
@@ -774,7 +863,7 @@ export default function Create_Campaign() {
                           ))}
                         </Select>
                       </Form.Item>
-                    </Card>
+                    // </Card>
                   )}
                   
                 </>
@@ -806,6 +895,11 @@ export default function Create_Campaign() {
                   <Form.Item
                     name="purchaseType"
                     label="Purchase Type"
+                     rules={
+                        requirePurchaseType
+                          ? [{ required: true, message: 'Please select a Purchase Type' }]
+                          : []
+                      }
                   >
                      <Space>
                         <span>Any Purchase</span>
@@ -836,6 +930,7 @@ export default function Create_Campaign() {
                     name="purchaseBrand"
                     label="Brand"
                     placeholder="Select brands"
+                    allowClear
                     optionsProvider={() => computeBrandOptions().allowedBrands}
                     disabled={watchBasedOn  === 'upload'}
                   />
@@ -854,6 +949,7 @@ export default function Create_Campaign() {
                   <MultiSelectDropdown
                     name="section"
                     label="Section"
+                     allowClear
                     placeholder="Select sections"
                     optionsProvider={() => computeBrandOptions().allowedSections}
                     disabled={watchBasedOn  === 'upload'}
@@ -872,6 +968,7 @@ export default function Create_Campaign() {
                 {() => (
                   <MultiSelectDropdown
                     name="product"
+                     allowClear
                     label="Product"
                     placeholder="Select products"
                     optionsProvider={() => computeBrandOptions().allowedProducts}
@@ -894,6 +991,7 @@ export default function Create_Campaign() {
                   <MultiSelectDropdown
                     name="model"
                     label="Model"
+                     allowClear
                     placeholder="Select models"
                     optionsProvider={() => computeBrandOptions().allowedModels}
                     disabled={watchBasedOn  === 'upload'}
@@ -912,6 +1010,7 @@ export default function Create_Campaign() {
                 {() => (
                   <MultiSelectDropdown
                     name="item"
+                     allowClear
                     label="Item"
                     placeholder="Select items"
                     optionsProvider={() => computeBrandOptions().allowedItems}
@@ -998,11 +1097,11 @@ export default function Create_Campaign() {
             {isEditing ? 'Update Campaign' : 'Create Campaign'}
           </Button> */}
            <Space>
-            <Button onClick={handleDownloadNumbers} size="large" htmlType="button">
+            {/* <Button onClick={handleDownloadNumbers} size="large" htmlType="button">
               Download Numbers
-            </Button>
-            <Button type="primary" htmlType="submit" size="large">
-              {isEditing ? 'Update Campaign' : 'Create Campaign'}
+            </Button> */}
+            <Button type="primary" size="large" onClick={handleCheckAndCreate}>
+              {isEditing ? 'Update Campaign' : 'Check and Create Campaign'}
             </Button>
           </Space>
         </Form.Item>

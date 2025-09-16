@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 import pandas as pd
 import math
 from fastapi import HTTPException
+from sqlalchemy.dialects import mysql
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from models.campaign.campaign_model import Campaign
@@ -159,9 +160,9 @@ def get_campaign_options(db: Session) -> CampaignOptions:
     )
 
 def create_campaign(db: Session, data: CampaignCreate) -> Campaign:
-   
-    db_obj = Campaign(**data.dict())
-    print("inside create campaign-----------------",**data.dict())
+    print("inside create campaign -----------------", data.dict(by_alias=False, exclude_unset=True))
+    db_obj = Campaign(**data.dict(by_alias=False))
+    
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -253,7 +254,7 @@ def generate_upload_template() -> BytesIO:
     return buffer
 
 
-def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetails | None:
+def get_campaign_run_details11(db: Session, campaign_id: int) -> CampaignRunDetails | None:
     """Return run-time details for a campaign."""
     camp: Campaign = db.query(Campaign).get(campaign_id)
     if not camp: 
@@ -507,3 +508,315 @@ def get_mobile_numbers1(db: Session, filters) -> list[str]:
 
     headers = {"Content-Disposition": "attachment; filename=export.csv"}
     return StreamingResponse(iter_csv(), headers=headers, media_type="text/csv")
+
+def expand_sql_with_params(sql, params, db):
+    """Expand a SQLAlchemy text() query with parameter values for debugging only."""
+    compiled = sql.compile(db.bind, compile_kwargs={"literal_binds": True})
+    final_sql = str(compiled)
+
+    for k, v in params.items():
+        placeholder = f":{k}"
+
+        if isinstance(v, tuple):
+            # Convert tuple into SQL IN list: ('A','B','C')
+            val = "(" + ",".join(f"'{x}'" if isinstance(x, str) else str(x) for x in v) + ")"
+        elif isinstance(v, str):
+            val = f"'{v}'"
+        elif v is None:
+            val = "NULL"
+        else:
+            val = str(v)
+
+        final_sql = final_sql.replace(placeholder, val)
+
+    return final_sql
+
+def get_campaign_run_details(db: Session, campaign_id: int) -> CampaignRunDetails | None:
+    """Return run-time details for a campaign, joined with crm_sales and crm_analysis."""
+    camp: Campaign = db.query(Campaign).get(campaign_id)
+    if not camp:
+        raise HTTPException(404, "Campaign not found")
+
+    # Labels for UI
+    rfm_segment_label = None
+    if isinstance(camp.rfm_segments, list) and camp.rfm_segments:
+        rfm_segment_label = camp.rfm_segments[0]
+    elif isinstance(camp.rfm_segments, dict) and "label" in camp.rfm_segments:
+        rfm_segment_label = camp.rfm_segments["label"]
+
+    brand_label = None
+    if isinstance(camp.purchase_brand, list) and camp.purchase_brand:
+        brand_label = camp.purchase_brand[0]
+    elif isinstance(camp.purchase_brand, str):
+        brand_label = camp.purchase_brand
+
+    # --- Build SQL dynamically ---
+    clauses = ["c.id = :cid"]
+    params = {"cid": campaign_id}
+
+    # Geography filters
+    if camp.branch:
+        clauses.append("a.LAST_IN_STORE_CODE IN :branch")
+        params["branch"] = tuple(camp.branch)
+    if camp.city:
+        clauses.append("a.LAST_IN_STORE_CITY IN :city")
+        params["city"] = tuple(camp.city)
+    if camp.state:
+        clauses.append("a.LAST_IN_STORE_STATE IN :state")
+        params["state"] = tuple(camp.state)
+
+    # Recency
+    if camp.recency_op and camp.recency_min is not None:
+        if camp.recency_op == ">=":
+            clauses.append("a.DAYS >= :rmin")
+        elif camp.recency_op == "<=":
+            clauses.append("a.DAYS <= :rmin")
+        elif camp.recency_op == "=":
+            clauses.append("a.DAYS = :rmin")
+        params["rmin"] = camp.recency_min
+
+    # Frequency
+    if camp.frequency_op and camp.frequency_min is not None:
+        if camp.frequency_op == ">=":
+            clauses.append("a.F_VALUE >= :fmin")
+        elif camp.frequency_op == "<=":
+            clauses.append("a.F_VALUE <= :fmin")
+        elif camp.frequency_op == "=":
+            clauses.append("a.F_VALUE = :fmin")
+        params["fmin"] = camp.frequency_min
+
+    # Monetary
+    if camp.monetary_op and camp.monetary_min is not None:
+        if camp.monetary_op == ">=":
+            clauses.append("a.M_VALUE >= :mmin")
+        elif camp.monetary_op == "<=":
+            clauses.append("a.M_VALUE <= :mmin")
+        elif camp.monetary_op == "=":
+            clauses.append("a.M_VALUE = :mmin")
+        params["mmin"] = camp.monetary_min
+
+    # RFM Scores
+    if camp.r_score:
+        clauses.append("a.R_SCORE IN :r_score")
+        params["r_score"] = tuple(camp.r_score)
+    if camp.f_score:
+        clauses.append("a.F_SCORE IN :f_score")
+        params["f_score"] = tuple(camp.f_score)
+    if camp.m_score:
+        clauses.append("a.M_SCORE IN :m_score")
+        params["m_score"] = tuple(camp.m_score)
+
+    # Product hierarchy
+    if brand_label:
+        clauses.append("s.BRAND = :brand")
+        params["brand"] = brand_label
+    if camp.section:
+        clauses.append("s.SECTION IN :section")
+        params["section"] = tuple(camp.section)
+    if camp.product:
+        clauses.append("s.PRODUCT IN :product")
+        params["product"] = tuple(camp.product)
+    if camp.model:
+        clauses.append("s.MODELNO IN :model")
+        params["model"] = tuple(camp.model)
+    if camp.item:
+        clauses.append("s.ITEM_CODE IN :item")
+        params["item"] = tuple(camp.item)
+
+    # Value threshold
+    if camp.value_threshold is not None:
+        clauses.append("s.TOTAL_SALES >= :val_threshold")
+        params["val_threshold"] = camp.value_threshold
+
+    # Birthday / Anniversary
+    if camp.birthday_start and camp.birthday_end:
+        clauses.append("a.DOB BETWEEN :bday_start AND :bday_end")
+        params["bday_start"] = camp.birthday_start
+        params["bday_end"] = camp.birthday_end
+
+    if camp.anniversary_start and camp.anniversary_end:
+        clauses.append("a.ANNIV_DT BETWEEN :anniv_start AND :anniv_end")
+        params["anniv_start"] = camp.anniversary_start
+        params["anniv_end"] = camp.anniversary_end
+
+    # --- Final SQL ---
+    base_sql = f"""
+        SELECT COUNT(DISTINCT a.CUST_MOBILENO) AS cnt
+        FROM campaigns c
+        JOIN crm_sales s 
+          ON s.INVOICE_DATE BETWEEN c.start_date AND c.end_date
+        JOIN crm_analysis a
+          ON a.CUST_MOBILENO = s.CUST_MOBILENO
+        WHERE {" AND ".join(clauses)}
+    """
+
+    sql = text(base_sql)
+
+    # Debug print with expanded values
+    debug_sql = expand_sql_with_params(sql, params, db)
+    print("Final SQL with values →")
+    print(debug_sql)
+
+    # Execute query
+    row = db.execute(sql, params).first()
+    shortlisted_count = int(row.cnt) if row and row.cnt is not None else 0
+
+    # Return object
+    return CampaignRunDetails(
+        id=camp.id,
+        name=camp.name,
+        start_date=camp.start_date,
+        end_date=camp.end_date,
+        based_on=camp.based_on,
+        recency_op=camp.recency_op,
+        recency_min=camp.recency_min,
+        recency_max=camp.recency_max,
+        frequency_op=camp.frequency_op,
+        frequency_min=camp.frequency_min,
+        frequency_max=camp.frequency_max,
+        monetary_op=camp.monetary_op,
+        monetary_min=_to_float(camp.monetary_min),
+        monetary_max=_to_float(camp.monetary_max),
+        r_score=camp.r_score,
+        f_score=camp.f_score,
+        m_score=camp.m_score,
+        rfm_segments=camp.rfm_segments,
+        branch=camp.branch,
+        city=camp.city,
+        state=camp.state,
+        birthday_start=camp.birthday_start,
+        birthday_end=camp.birthday_end,
+        anniversary_start=camp.anniversary_start,
+        anniversary_end=camp.anniversary_end,
+        purchase_type=camp.purchase_type,
+        purchase_brand=camp.purchase_brand,
+        section=camp.section,
+        product=camp.product,
+        model=camp.model,
+        item=camp.item,
+        value_threshold=_to_float(camp.value_threshold),
+        created_at=camp.created_at,
+        updated_at=camp.updated_at,
+        rfm_segment_label=rfm_segment_label or "-",
+        brand_label=brand_label or "-",
+        shortlisted_count=shortlisted_count,
+    )
+
+def get_campaign_run_count_from_request(db: Session, filters: dict) -> int:
+    """
+    Return count of distinct customers from crm_sales + crm_analysis
+    based only on request filter parameters (no campaigns table join).
+    """
+
+    clauses = []
+    params = {}
+
+    # --- Geography filters ---
+    if filters.get("branch"):
+        clauses.append("a.LAST_IN_STORE_CODE IN :branch")
+        params["branch"] = tuple(filters["branch"])
+    if filters.get("city"):
+        clauses.append("a.LAST_IN_STORE_CITY IN :city")
+        params["city"] = tuple(filters["city"])
+    if filters.get("state"):
+        clauses.append("a.LAST_IN_STORE_STATE IN :state")
+        params["state"] = tuple(filters["state"])
+
+    # --- Recency ---
+    if filters.get("recency_op") and filters.get("recency_min") is not None:
+        op = filters["recency_op"]
+        if op in (">=", "<=", "="):
+            clauses.append(f"a.DAYS {op} :rmin")
+            params["rmin"] = filters["recency_min"]
+
+    # --- Frequency ---
+    if filters.get("frequency_op") and filters.get("frequency_min") is not None:
+        op = filters["frequency_op"]
+        if op in (">=", "<=", "="):
+            clauses.append(f"a.F_VALUE {op} :fmin")
+            params["fmin"] = filters["frequency_min"]
+
+    # --- Monetary ---
+    if filters.get("monetary_op") and filters.get("monetary_min") is not None:
+        op = filters["monetary_op"]
+        if op in (">=", "<=", "="):
+            clauses.append(f"a.M_VALUE {op} :mmin")
+            params["mmin"] = filters["monetary_min"]
+
+    # --- RFM Scores ---
+    if filters.get("r_score"):
+        clauses.append("a.R_SCORE IN :r_score")
+        params["r_score"] = tuple(filters["r_score"])
+    if filters.get("f_score"):
+        clauses.append("a.F_SCORE IN :f_score")
+        params["f_score"] = tuple(filters["f_score"])
+    if filters.get("m_score"):
+        clauses.append("a.M_SCORE IN :m_score")
+        params["m_score"] = tuple(filters["m_score"])
+
+    # --- Product hierarchy ---
+    if filters.get("brand"):
+        clauses.append("s.BRAND = :brand")
+        params["brand"] = filters["brand"]
+    if filters.get("section"):
+        clauses.append("s.SECTION IN :section")
+        params["section"] = tuple(filters["section"])
+    if filters.get("product"):
+        clauses.append("s.PRODUCT IN :product")
+        params["product"] = tuple(filters["product"])
+    if filters.get("model"):
+        clauses.append("s.MODELNO IN :model")
+        params["model"] = tuple(filters["model"])
+    if filters.get("item"):
+        clauses.append("s.ITEM_CODE IN :item")
+        params["item"] = tuple(filters["item"])
+
+    # --- Value Threshold ---
+    if filters.get("value_threshold") is not None:
+        clauses.append("s.TOTAL_SALES >= :val_threshold")
+        params["val_threshold"] = filters["value_threshold"]
+
+    # --- Birthday ---
+    if filters.get("birthday_start") and filters.get("birthday_end"):
+        clauses.append("a.DOB BETWEEN :bday_start AND :bday_end")
+        params["bday_start"] = filters["birthday_start"]
+        params["bday_end"] = filters["birthday_end"]
+
+    # --- Anniversary ---
+    if filters.get("anniversary_start") and filters.get("anniversary_end"):
+        clauses.append("a.ANNIV_DT BETWEEN :anniv_start AND :anniv_end")
+        params["anniv_start"] = filters["anniversary_start"]
+        params["anniv_end"] = filters["anniversary_end"]
+
+    # --- Final SQL ---
+    where_clause = " AND ".join(clauses) if clauses else "1=1"
+
+    
+    shortlisted_sql = text(f"""
+        SELECT COUNT(DISTINCT a.CUST_MOBILENO) AS cnt
+        FROM crm_sales s
+        JOIN crm_analysis a
+        ON a.CUST_MOBILENO = s.CUST_MOBILENO
+        WHERE {where_clause}
+    """)
+
+    total_sql = text("""
+        SELECT COUNT(DISTINCT a.CUST_MOBILENO) AS cnt
+        FROM crm_sales s
+        JOIN crm_analysis a
+        ON a.CUST_MOBILENO = s.CUST_MOBILENO
+    """)
+
+    # Debug print
+    debug_sql = expand_sql_with_params(shortlisted_sql, params, db)
+    print("Final SQL with values →")
+    print(debug_sql)
+
+    # Execute queries
+    shortlisted_row = db.execute(shortlisted_sql, params).first()
+    total_row = db.execute(total_sql).first()
+
+    return {
+        "total_customers": int(total_row.cnt) if total_row and total_row.cnt is not None else 0,
+        "shortlisted_customers": int(shortlisted_row.cnt) if shortlisted_row and shortlisted_row.cnt is not None else 0,
+    }
